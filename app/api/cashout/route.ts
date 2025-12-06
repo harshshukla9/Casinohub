@@ -47,8 +47,9 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Calculate winnings
+    // Calculate winnings (betAmount * multiplier)
     const winnings = betAmountNumber * multiplierNumber;
+
     
     console.log('Cashout API - Calculating winnings:', {
       betAmount: betAmountNumber,
