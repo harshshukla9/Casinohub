@@ -284,17 +284,17 @@ export function DepositButton() {
     <>
       <button
         onClick={openModal}
-        className="p-2 bg-[#30333B] hover:bg-[#30333B]/80 text-white whitespace-nowrap rounded-md  transition-colors"
+        className="w-full bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
       >
         Deposit / Withdraw STT
       </button>
       {isModalOpen && isMounted && createPortal(
         <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] animate-in fade-in duration-200"
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
           onClick={closeModal}
         >
           <div
-            className="rounded-2xl p-6 w-full max-w-xl mx-4 shadow-2xl animate-in zoom-in-95 duration-200 relative border border-white/10 bg-[#1c1a1f]/95 backdrop-blur-xl"
+            className="rounded-xl p-6 w-full max-w-xl mx-4 shadow-2xl relative border border-white/20 bg-[#240B53] backdrop-blur-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
@@ -315,30 +315,30 @@ export function DepositButton() {
 
 
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)} className='w-full'>
-              <TabsList className="grid grid-cols-2 bg-[#30333B] text-white">
+              <TabsList className="grid grid-cols-2 bg-white/10 border border-white/20 text-white">
                 <TabsTrigger
                   value="deposit"
-                  className="data-[state=active]:bg-[#1D1B1E] data-[state=active]:text-white"
+                  className="data-[state=active]:bg-white/20 data-[state=active]:text-white"
                 >
                   Deposit
                 </TabsTrigger>
                 <TabsTrigger
                   value="withdraw"
-                  className="data-[state=active]:bg-[#1D1B1E] data-[state=active]:text-white"
+                  className="data-[state=active]:bg-white/20 data-[state=active]:text-white"
                 >
                   Withdraw
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="deposit" className="mt-6 space-y-4 text-white">
-                <div className="p-3 rounded-lg bg-white/5 border border-white/10 flex items-center justify-between">
+                <div className="p-4 rounded-lg bg-white/10 border border-white/20 flex items-center justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-white/60">Current Deposits</p>
-                    <p className="text-xl font-semibold">{contractDeposits} STT</p>
+                    <p className="text-xs uppercase tracking-wide text-white/60 mb-1">Current Deposits</p>
+                    <p className="text-lg font-semibold text-white">{contractDeposits} STT</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs uppercase tracking-wide text-white/60">Wallet Balance</p>
-                    <p className="text-xl font-mono text-purple-300">
+                    <p className="text-xs uppercase tracking-wide text-white/60 mb-1">Wallet Balance</p>
+                    <p className="text-lg font-mono text-white">
                       {balance ? Number(formatEther(balance.value)).toFixed(4) : '0.0000'}
                     </p>
                   </div>
@@ -356,8 +356,8 @@ export function DepositButton() {
                     placeholder="0.0"
                     step="0.001"
                     min="0"
-                    className={`w-full px-3 py-2 border rounded-lg bg-white/10 text-white placeholder-white/50 focus:outline-none focus:ring-2 ${
-                      depositError ? 'border-red-500 focus:ring-red-500' : 'border-white/20 focus:ring-blue-500'
+                    className={`w-full px-3 py-2.5 border rounded-lg bg-white/10 text-white placeholder-white/50 focus:outline-none focus:ring-2 ${
+                      depositError ? 'border-red-500/50 focus:ring-red-500' : 'border-white/20 focus:ring-white/50'
                     }`}
                     disabled={isDepositing || isProcessingDeposit || isLoading}
                   />
@@ -369,7 +369,7 @@ export function DepositButton() {
                 <div className="flex gap-3">
                   <button
                     onClick={closeModal}
-                    className="flex-1 py-2 px-4 border border-white/20 text-white rounded-lg hover:bg-white/10"
+                    className="flex-1 py-2.5 px-4 border border-white/20 text-white rounded-lg hover:bg-white/10 transition-colors"
                   >
                     Cancel
                   </button>
@@ -383,7 +383,7 @@ export function DepositButton() {
                       isLoading ||
                       (depositAmount && parseFloat(depositAmount) > walletBalance)
                     )}
-                    className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 py-2.5 px-4 bg-white text-[#240B53] rounded-lg hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
                   >
                     {isDepositing ? 'Depositing...' : isProcessingDeposit ? 'Saving...' : 'Deposit'}
                   </button>
@@ -402,18 +402,18 @@ export function DepositButton() {
               </TabsContent>
 
               <TabsContent value="withdraw" className="mt-6 max-h-[40vh] overflow-y-auto space-y-4 text-white">
-                <div className="p-3 rounded-lg bg-white/5 border border-white/10 flex flex-col gap-1">
-                  <p className="text-xs uppercase tracking-wide text-white/60">Available Balance</p>
+                <div className="p-4 rounded-lg bg-white/10 border border-white/20 flex flex-col gap-1">
+                  <p className="text-xs uppercase tracking-wide text-white/60 mb-1">Available Balance</p>
                   {isLoadingUserBalance ? (
-                    <p className="text-2xl font-semibold text-emerald-300">Loading...</p>
+                    <p className="text-lg font-semibold text-white/40">Loading...</p>
                   ) : (
-                    <p className="text-2xl font-semibold text-emerald-300">{userBalance.toFixed(4)} STT</p>
+                    <p className="text-lg font-semibold text-white">{userBalance.toFixed(4)} STT</p>
                   )}
-                  <p className="text-xs text-white/60">Minimum withdrawal {MIN_WITHDRAWAL_AMOUNT} STT</p>
+                  <p className="text-xs text-white/60 mt-1">Minimum withdrawal {MIN_WITHDRAWAL_AMOUNT} STT</p>
                 </div>
 
                 {!isLoadingWithdrawalHistory && withdrawalData && !withdrawalData.canWithdraw && (
-                  <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-400/30 text-yellow-200 text-sm">
+                  <div className="p-3 rounded-lg bg-yellow-500/20 border border-yellow-400/30 text-yellow-100 text-sm">
                     ⏱️ You can only withdraw once per 24 hours. Please wait {withdrawalData.hoursRemaining} more hour(s).
                   </div>
                 )}
@@ -430,8 +430,8 @@ export function DepositButton() {
                     placeholder="0.0"
                     step="0.001"
                     min={MIN_WITHDRAWAL_AMOUNT}
-                    className={`w-full px-3 py-2 border rounded-lg bg-white/10 text-white placeholder-white/50 focus:outline-none focus:ring-2 ${
-                      withdrawError ? 'border-red-500 focus:ring-red-500' : 'border-white/20 focus:ring-emerald-500'
+                    className={`w-full px-3 py-2.5 border rounded-lg bg-white/10 text-white placeholder-white/50 focus:outline-none focus:ring-2 ${
+                      withdrawError ? 'border-red-500/50 focus:ring-red-500' : 'border-white/20 focus:ring-white/50'
                     }`}
                     disabled={Boolean(isProcessingWithdraw || isLoadingWithdrawalHistory || (withdrawalData && !withdrawalData.canWithdraw))}
                   />
@@ -440,7 +440,7 @@ export function DepositButton() {
                   )}
                 </div>
 
-                <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-400/20 text-xs text-blue-100">
+                <div className="p-3 rounded-lg bg-blue-500/20 border border-blue-400/30 text-xs text-blue-100">
                   ⚠️ Your balance will be deducted immediately upon request. Withdrawals are processed within 24-48 hours.
                 </div>
 
@@ -449,11 +449,11 @@ export function DepositButton() {
                     <p className="text-sm font-medium mb-2">Recent Withdrawals</p>
                     <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
                       {withdrawalData.withdrawals.slice(0, 3).map((w) => (
-                        <div key={w._id} className="p-2 bg-white/5 rounded text-xs border border-white/10">
+                        <div key={w._id} className="p-2.5 bg-white/10 rounded-lg text-xs border border-white/20">
                           <div className="flex justify-between items-center">
-                            <span className="text-white">{w.amount.toFixed(4)} STT</span>
+                            <span className="text-white font-medium">{w.amount.toFixed(4)} STT</span>
                             <span
-                              className={`px-2 py-0.5 rounded capitalize ${
+                              className={`px-2 py-0.5 rounded capitalize text-xs ${
                                 w.status === 'completed'
                                   ? 'bg-green-500/20 text-green-300'
                                   : w.status === 'pending'
@@ -476,7 +476,7 @@ export function DepositButton() {
                 <div className="flex gap-3">
                   <button
                     onClick={closeModal}
-                    className="flex-1 py-2 px-4 border border-white/20 text-white rounded-lg hover:bg-white/10"
+                    className="flex-1 py-2.5 px-4 border border-white/20 text-white rounded-lg hover:bg-white/10 transition-colors"
                   >
                     Cancel
                   </button>
@@ -489,7 +489,7 @@ export function DepositButton() {
                       isLoadingWithdrawalHistory ||
                       (withdrawalData && !withdrawalData.canWithdraw)
                     )}
-                    className="flex-1 py-2 px-4 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 py-2.5 px-4 bg-white text-[#240B53] rounded-lg hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
                   >
                     {isProcessingWithdraw ? 'Processing...' : 'Withdraw'}
                   </button>

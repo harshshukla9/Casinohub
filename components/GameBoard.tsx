@@ -290,7 +290,7 @@ export const GameBoard = () => {
   const currentPayout = betAmount * multiplier;
 
   return (
-    <div className="relative h-[70vh] md:h-full md:rounded-xl md:overflow-hidden md:w-full w-full overflow-hidden">
+    <div className="relative h-[50vh]  md:h-full md:rounded-xl md:overflow-hidden md:w-full w-full overflow-hidden">
       <div
         className="h-full w-full z-10 object-cover"
         style={{
@@ -382,9 +382,9 @@ export const GameBoard = () => {
           </motion.div>
         )}
 
-        <div className="flex flex-col absolute top-12 md:top-15 md:left-[65%] md:-translate-x-1/2 h-full md:w-full w-full px-4">
+        <div className="flex flex-col absolute top-8 md:top-15 md:left-[65%] md:-translate-x-1/2 h-full md:w-full w-full px-4">
           <div 
-          className="relative w-[50vw] z-10 p-8 md:p-12 lg:p-16 overflow-hidden h-[90vh] flex flex-col items-center justify-center" 
+          className="relative md:w-[50vw] w-[92vw] z-10 p-8 md:p-12 lg:p-16 overflow-hidden md:h-[90vh] h-[43vh] flex flex-col items-center justify-center" 
           >
 
         <div className="absolute inset-0 bg-[url('/all%20assets/MineFrame.svg')] bg-cover bg-no-repeat bg-center pointer-events-none" />
@@ -401,7 +401,7 @@ export const GameBoard = () => {
                        if (tile === "hidden") {
                         return "url('/all%20assets/withoutOpen.svg')";
                        }
-                      return "";
+                      return "url('/all%20assets/withOpen.svg')";
                      };
 
                      const getTileContent = () => {
@@ -411,9 +411,9 @@ export const GameBoard = () => {
                          return (
                            <motion.img
                              key={`safe-${rowIdx}-${colIdx}`}
-                             src="/all%20assets/diamond%20purpleMines.svg"
+                             src="/all%20assets/purpleMines.svg"
                              alt="Safe"
-                             className="w-full h-full object-contain"
+                             className=""
                              initial={{ scale: 0, rotate: 180, opacity: 0 }}
                              animate={{ scale: 1, rotate: 0, opacity: 1 }}
                              transition={{ duration: 0.4 }}
@@ -452,7 +452,7 @@ export const GameBoard = () => {
                      return (
                       <motion.div
                         key={`${rowIdx}-${colIdx}`}
-                        className={`h-full w-full rounded-lg flex items-center justify-center text-white text-2xl font-bold ${
+                        className={`h-[6vh] w-[12vw] rounded-lg flex items-center justify-center text-white text-2xl font-bold ${
                           isClickable
                             ? "cursor-pointer hover:brightness-110"
                             : "cursor-not-allowed"

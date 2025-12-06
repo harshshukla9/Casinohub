@@ -275,12 +275,16 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
   return (
     <div className="py-2 px-2 flex  flex-col gap-4">
       <Tabs className="w-full bg-transparent">
-  <TabsList className="w-full flex rounded-full overflow-hidden text-xl py-4 bg-[#110D14]">
-    <TabsTrigger value="manual" className="text-xl data-[state=active]:text-white p-4 text-white">Manual</TabsTrigger>
-    <TabsTrigger value="auto" className="text-xl p-4 data-[state=active]:text-white text-white">Auto</TabsTrigger>
+  <TabsList className="w-full flex rounded-full overflow-hidden text-xl bg-[#110D14] p-2">
+    <TabsTrigger value="manual" className="text-xl data-[state=active]:text-white p-2 text-white">Manual</TabsTrigger>
+    <TabsTrigger value="auto" className="text-xl p-2 data-[state=active]:text-white text-white">Auto</TabsTrigger>
   </TabsList>
+
+
   <TabsContents>
-    <TabsContent value="manual">
+
+    {/* MANUAL */}
+    <TabsContent value="manual" className="flex flex-col gap-4">
     <div className="">
         {isPlaying && (
           <div className="bg-gradient-to-r from-green-900/30 via-emerald-900/20 to-green-900/30 flex rounded-t-lg px-4 py-3 items-center justify-between border border-green-500/40 shadow-lg shadow-green-500/10">
@@ -346,7 +350,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
             )}
       </div>
 
-      <div className="space-y-1">
+      <div className="">
         <div className="flex justify-between items-center">
           <label className="text-base font-medium text-gray-300">
             Bet Amount
@@ -383,7 +387,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
             disabled={isPlaying}
             onChange={handleBetAmountChange}
             step="0.01"
-            className="flex-1 text-lg px-4 py-6 rounded-none focus:outline-none border-gray-600 bg-black text-white rounded-l-lg"
+            className="flex-1 text-lg px-4 py-6 rounded-none active:outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 border-gray-600 bg-black text-white rounded-l-lg"
           />
           <div className="flex">
             <button
@@ -404,35 +408,34 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="">
         <label className="block text-base font-medium text-gray-300">
-          Difficulty Level
+          Mines
         </label>
         <div className="relative">
           <Select
-            value={mode}
-            onValueChange={(val) => setMode(val as GameMode)}
+            value={mineCount.toString()}
+            onValueChange={(val) => {
+              const value = parseInt(val) || 1;
+              setMineCount(Math.min(Math.max(value, 1), 24));
+            }}
             disabled={isPlaying}
           >
-            <SelectTrigger className="w-full h-12 px-4 bg-black rounded-lg text-white border-[#51545F] focus:outline-none  focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed">
-              <SelectValue placeholder="Select Difficulty" />
+            <SelectTrigger className="w-full h-12 px-4 bg-black rounded-lg text-white border-[#51545F] focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed">
+              <SelectValue placeholder="Select Mines" />
             </SelectTrigger>
-            <SelectContent className="bg-black border border-gray-700 text-white">
-              <SelectItem value="easy" className="cursor-pointer">
-                Easy (Lower Risk)
-              </SelectItem>
-              <SelectItem value="medium" className="cursor-pointer">
-                Medium (Medium Risk)
-              </SelectItem>
-              <SelectItem value="hard" className="cursor-pointer">
-                Hard (Higher Risk)
-              </SelectItem>
+            <SelectContent className="bg-black border border-gray-700 text-white max-h-[300px]">
+              {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
+                <SelectItem key={num} value={num.toString()} className="cursor-pointer">
+                  {num} {num === 1 ? 'Mine' : 'Mines'}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="">
         <label className="block text-base font-medium text-gray-300">
           Number of Mines (1-24)
         </label>
@@ -499,7 +502,10 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
         </button>
       </div>
     </TabsContent>
-    <TabsContent value="auto">
+
+
+    {/* AUTO */}
+    <TabsContent value="auto" className="flex flex-col gap-4">
     <div className="">
         {isPlaying && (
           <div className="bg-gradient-to-r from-green-900/30 via-emerald-900/20 to-green-900/30 flex rounded-t-lg px-4 py-3 items-center justify-between border border-green-500/40 shadow-lg shadow-green-500/10">
@@ -565,7 +571,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
             )}
       </div>
 
-      <div className="space-y-1">
+      <div className="">
         <div className="flex justify-between items-center">
           <label className="text-base font-medium text-gray-300">
             Bet Amount
@@ -602,7 +608,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
             disabled={isPlaying}
             onChange={handleBetAmountChange}
             step="0.01"
-            className="flex-1 text-lg px-4 py-6 rounded-none focus:outline-none border-gray-600 bg-black text-white rounded-l-lg"
+            className="flex-1 text-lg px-4 py-6 rounded-none focus:outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 border-gray-600 bg-black text-white rounded-l-lg"
           />
           <div className="flex">
             <button
@@ -623,35 +629,34 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="">
         <label className="block text-base font-medium text-gray-300">
-          Difficulty Level
+          Mines
         </label>
         <div className="relative">
           <Select
-            value={mode}
-            onValueChange={(val) => setMode(val as GameMode)}
+            value={mineCount.toString()}
+            onValueChange={(val) => {
+              const value = parseInt(val) || 1;
+              setMineCount(Math.min(Math.max(value, 1), 24));
+            }}
             disabled={isPlaying}
           >
-            <SelectTrigger className="w-full h-12 px-4 bg-black rounded-lg text-white border-[#51545F] focus:outline-none  focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed">
-              <SelectValue placeholder="Select Difficulty" />
+            <SelectTrigger className="w-full h-12 px-4 bg-black rounded-lg text-white border-[#51545F] focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed">
+              <SelectValue placeholder="Select Mines" />
             </SelectTrigger>
-            <SelectContent className="bg-black border border-gray-700 text-white">
-              <SelectItem value="easy" className="cursor-pointer">
-                Easy (Lower Risk)
-              </SelectItem>
-              <SelectItem value="medium" className="cursor-pointer">
-                Medium (Medium Risk)
-              </SelectItem>
-              <SelectItem value="hard" className="cursor-pointer">
-                Hard (Higher Risk)
-              </SelectItem>
+            <SelectContent className="bg-black border border-gray-700 text-white max-h-[300px]">
+              {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
+                <SelectItem key={num} value={num.toString()} className="cursor-pointer">
+                  {num} {num === 1 ? 'Mine' : 'Mines'}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="">
         <label className="block text-base font-medium text-gray-300">
           Number of Mines (1-24)
         </label>
@@ -688,10 +693,9 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
           <Input
             placeholder="10"
             type="number"
-            value=""
-            disabled={true}
+            value="5"
             step="1"
-            className="flex-1 text-lg px-4 py-6 rounded-none focus:outline-none border-gray-600 bg-black text-white rounded-lg"
+            className="flex-1 text-lg focus:outline-none focus-visible:outline-none focus-visible:ring-0 px-4 py-4 rounded-none focus:outline-none border-gray-600 bg-black text-white! rounded-lg"
           />
 
 

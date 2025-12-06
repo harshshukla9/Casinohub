@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 const AUDIO_ASSETS = {
   background: '/sounds/BGM.mp3',
@@ -42,13 +41,9 @@ export const AudioController = () => {
   const diamondRef = useRef<HTMLAudioElement | null>(null);
   const deathRef = useRef<HTMLAudioElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [isReady, setIsReady] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [bgmVolume, setBgmVolume] = useState(DEFAULT_SETTINGS.bgmVolume);
   const [sfxVolume, setSfxVolume] = useState(DEFAULT_SETTINGS.sfxVolume);
-  const [buttonPosition, setButtonPosition] = useState({ top: 0, right: 0 });
-  const [isMounted, setIsMounted] = useState(false);
 
   const clampVolume = (value: number) => Math.min(1, Math.max(0, value));
 
@@ -82,7 +77,6 @@ export const AudioController = () => {
     const settings = loadPersistedSettings();
     setBgmVolume(settings.bgmVolume);
     setSfxVolume(settings.sfxVolume);
-    setIsMounted(true);
   }, [loadPersistedSettings]);
 
   useEffect(() => {
@@ -216,35 +210,6 @@ export const AudioController = () => {
     };
   }, [isReady, playSfx]);
 
-  useEffect(() => {
-    if (!isExpanded) {
-      return;
-    }
-    
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      
-      if (buttonRef.current?.contains(target)) {
-        return;
-      }
-      
-      const panel = document.getElementById('audio-controls-panel');
-      if (panel?.contains(target)) {
-        return;
-      }
-      
-      setIsExpanded(false);
-    };
-
-    const timer = setTimeout(() => {
-      window.addEventListener('pointerdown', handleClickOutside);
-    }, 100);
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('pointerdown', handleClickOutside);
-    };
-  }, [isExpanded]);
 
   const formatVolume = (value: number) => `${Math.round(value * 100)}%`;
 
@@ -256,49 +221,13 @@ export const AudioController = () => {
     setSfxVolume((prev) => (prev <= 0 ? DEFAULT_SETTINGS.sfxVolume : 0));
   };
 
-  useEffect(() => {
-    if (!isExpanded || !buttonRef.current) {
-      return;
-    }
 
-    const updatePosition = () => {
-      if (!buttonRef.current) return;
-      const rect = buttonRef.current.getBoundingClientRect();
-      setButtonPosition({
-        top: rect.bottom + 8,
-        right: window.innerWidth - rect.right,
-      });
-    };
-
-    updatePosition();
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition);
-    
-    return () => {
-      window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition);
-    };
-  }, [isExpanded]);
-
-  const audioPanel = isExpanded && isMounted ? (
-    <div
-      id="audio-controls-panel"
-      role="dialog"
-      aria-label="Game audio settings"
-      className="fixed w-64 rounded-xl bg-black/95 border border-white/20 shadow-2xl backdrop-blur-md p-4 space-y-4 z-[99999]"
-      style={{
-        top: `${buttonPosition.top}px`,
-        right: `${buttonPosition.right}px`,
-        pointerEvents: 'auto',
-        touchAction: 'auto',
-      }}
-      onPointerDown={(e) => e.stopPropagation()}
-      onClick={(e) => e.stopPropagation()}
-    >
+  return (
+    <div className="w-full space-y-3" ref={containerRef}>
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm text-gray-200">
-          <span>Background Music</span>
-          <span>{formatVolume(bgmVolume)}</span>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-white">Background Music</span>
+          <span className="text-xs text-white/60">{formatVolume(bgmVolume)}</span>
         </div>
         <input
           type="range"
@@ -307,29 +236,23 @@ export const AudioController = () => {
           step={5}
           value={Math.round(bgmVolume * 100)}
           onChange={(event) => {
-            event.stopPropagation();
             setBgmVolume(clampVolume(Number(event.target.value) / 100));
           }}
-          onPointerDown={(e) => e.stopPropagation()}
-          className="w-full accent-yellow-500 cursor-pointer"
-          style={{ touchAction: 'none' }}
+          className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
         />
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleBgmMute();
-          }}
-          className="w-full text-xs px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white"
+          onClick={toggleBgmMute}
+          className="w-full text-xs px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 transition-colors text-white border border-white/20"
         >
-          {bgmVolume <= 0 ? 'Unmute Background' : 'Mute Background'}
+          {bgmVolume <= 0 ? 'Unmute BGM' : 'Mute BGM'}
         </button>
       </div>
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm text-gray-200">
-          <span>Sound Effects</span>
-          <span>{formatVolume(sfxVolume)}</span>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-white">Sound Effects</span>
+          <span className="text-xs text-white/60">{formatVolume(sfxVolume)}</span>
         </div>
         <input
           type="range"
@@ -338,41 +261,18 @@ export const AudioController = () => {
           step={5}
           value={Math.round(sfxVolume * 100)}
           onChange={(event) => {
-            event.stopPropagation();
             setSfxVolume(clampVolume(Number(event.target.value) / 100));
           }}
-          onPointerDown={(e) => e.stopPropagation()}
-          className="w-full accent-emerald-500 cursor-pointer"
-          style={{ touchAction: 'none' }}
+          className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
         />
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleSfxMute();
-          }}
-          className="w-full text-xs px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white"
+          onClick={toggleSfxMute}
+          className="w-full text-xs px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 transition-colors text-white border border-white/20"
         >
-          {sfxVolume <= 0 ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
+          {sfxVolume <= 0 ? 'Unmute SFX' : 'Mute SFX'}
         </button>
       </div>
-    </div>
-  ) : null;
-
-  return (
-    <div className="relative" ref={containerRef}>
-      <button
-        ref={buttonRef}
-        type="button"
-        aria-expanded={isExpanded}
-        aria-controls="audio-controls-panel"
-        onClick={() => setIsExpanded((prev) => !prev)}
-        className="px-2 py-1 rounded-full bg-black/40 border border-white/10 text-white hover:bg-black/60 transition-colors"
-      >
-        <span aria-hidden="true">{bgmVolume <= 0 && sfxVolume <= 0 ? '🔇' : '🔊'}</span>
-      </button>
-
-      {isMounted && typeof document !== 'undefined' && createPortal(audioPanel, document.body)}
     </div>
   );
 };
