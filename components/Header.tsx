@@ -13,7 +13,7 @@ export const Header = () => {
     <header className="bg-[#1F2326] border-b border-white/10">
       <div className="w-full px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between gap-4 mb-3">
-          <Image src="/LOGO/LogooMines.svg" alt="Karma Mines" width={100} height={100} classNamew="w-full h-full" />
+          <Image src="/LOGO/LogooMines.svg" alt="Karma Mines" width={100} height={100} className="w-full h-full" />
           <Popover>
             <PopoverTrigger asChild>
               <button

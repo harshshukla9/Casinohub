@@ -1,7 +1,7 @@
 // STT Token Contract Address
 export const STT_TOKEN_ADDRESS = "0x1C3Ac2a186c6149Ae7Cb4D716eBbD0766E4f898a" as const;
 
-// ERC20 Standard ABI (for approve, allowance, balanceOf, transfer, transferFrom)
+// ERC20 Standard ABI (for approve, allowance, balanceOf, transfer, transferFrom , decimals)
 export const ERC20_ABI = [
   {
     "type": "function",
