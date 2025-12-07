@@ -8,7 +8,7 @@ import { Controls } from "./Controls";
 export const GameLayout = () => {
   return (
     <div
-      className="flex flex-col md:flex-row md:gap-6 h-full md:justify-between md:w-full relative bg-[#1D1B1E] md:p-2 px-2 py-4"
+      className="flex flex-col md:flex-row md:gap-6 h-full md:justify-between md:w-full relative bg-[#1D1B1E] md:p-2 "
     >
       <div className="md:flex md:flex-col md:h-full md:w-[35vw] md:rounded-xl md:overflow-hidden md:gap-2 md:bg-[#240B53]">
       {/* // 1 */}
