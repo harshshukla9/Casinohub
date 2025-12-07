@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Tabs, TabsContent, TabsContents, TabsList, TabsTrigger } from "./animate-ui/components/animate/tabs";
+import Image from "next/image";
 
 interface ControlsProps {
   onBetPlaced?: () => void;
@@ -411,17 +412,17 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
 
   return (
     <div className="px-2 flex flex-col gap-4">
-      <Tabs className="w-full bg-transparent">
+      {/* <Tabs className="w-full bg-transparent">
   <TabsList className="w-full flex rounded-full overflow-hidden text-xl bg-[#110D14] p-2">
     <TabsTrigger value="manual" className="text-xl data-[state=active]:text-white p-2 text-white">Manual</TabsTrigger>
     <TabsTrigger value="auto" className="text-xl p-2 data-[state=active]:text-white text-white">Auto</TabsTrigger>
-  </TabsList>
+  </TabsList> */}
 
 
-  <TabsContents>
+  {/* <TabsContents> */}
 
     {/* MANUAL */}
-    <TabsContent value="manual" className="flex flex-col gap-4 h-full overflow-y-auto">
+    <div className="flex flex-col gap-4 h-full overflow-y-auto">
     <div className="">
         {isPlaying && (
           <div className="bg-white/10 border border-white/20 rounded-lg px-4 py-3 flex items-center justify-between">
@@ -484,7 +485,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
 
       <div className="">
         <div className="flex justify-between items-center">
-          <label className="text-base font-medium text-gray-300">
+          <label className="text-base font-medium text-gray-300 mb-1">
             Bet Amount
           </label>
         </div>
@@ -520,10 +521,10 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
               disabled={isPlaying}
               onChange={handleBetAmountChange}
               step="0.01"
-              className="w-full text-lg px-4 py-6 h-14 border-gray-600 bg-[#1E2838] text-white rounded-lg pr-12"
+              className="w-full text-lg focus:outline-none focus-visible:outline-none focus-visible:ring-0 px-4 py-6 h-14 border-gray-600 bg-black text-white rounded-lg pr-12"
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-500 text-xl">
-              🪙
+              <Image src={"/token/sepolia.png"} alt="sepolia" width={50} height={20} className="w-8 h-8" />
             </span>
           </div>
           <button
@@ -545,7 +546,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
 
       {/* Mines Selector */}
       <div className="">
-        <label className="block text-base font-medium text-gray-300">
+        <label className="block text-base font-medium text-gray-300 mb-1">
           Mines
         </label>
         <Select
@@ -556,10 +557,10 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
           }}
           disabled={isPlaying}
         >
-          <SelectTrigger className="w-full h-14 px-4 bg-[#1E2838] rounded-lg text-white text-lg border-gray-600 focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed">
+          <SelectTrigger className="w-full h-14 px-4 bg-black rounded-lg text-white text-lg border-gray-600 focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed">
             <SelectValue placeholder="Select Mines" />
           </SelectTrigger>
-          <SelectContent className="bg-[#1a1a1a] border border-gray-700 text-white max-h-[300px]">
+          <SelectContent className="bg-black border border-gray-700 text-white max-h-[300px]">
             {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
               <SelectItem key={num} value={num.toString()} className="cursor-pointer">
                 {num} {num === 1 ? 'Mine' : 'Mines'}
@@ -571,10 +572,10 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
 
       {/* Gems */}
       <div className="">
-        <label className="block text-base font-medium text-gray-300">
+        <label className="block text-base font-medium text-gray-300 mb-1">
           Gems
         </label>
-        <div className="w-full h-14 px-4 bg-[#1E2838] rounded-lg text-white text-lg border border-gray-600 flex items-center">
+        <div className="w-full h-14 px-4 bg-black rounded-lg text-white text-lg border border-gray-600 flex items-center">
           {25 - mineCount}
         </div>
       </div>
@@ -590,23 +591,14 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
           </span>
         </div>
         <div className="relative">
-          <div className="w-full h-14 px-4 bg-[#1E2838] rounded-lg text-white text-lg border border-gray-600 flex items-center pr-12">
+          <div className="w-full h-14 px-4 bg-black rounded-lg text-white text-lg border border-gray-600 flex items-center pr-12">
             {(betAmount * multiplier - betAmount).toFixed(8)}
           </div>
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-500 text-xl">
-            🪙
+          <Image src={"/token/sepolia.png"} alt="sepolia" width={50} height={20} className="w-8 h-8" />
           </span>
         </div>
       </div>
-
-      {/* Random Pick Button for Manual Mode */}
-      <button
-        onClick={pickRandomTile}
-        disabled={!isPlaying}
-        className="w-full py-3 bg-gray-700/50 hover:bg-gray-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-      >
-        Random Pick
-      </button>
 
       <div className="flex flex-col gap-2 md:mt-4">
         <motion.button
@@ -648,259 +640,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
           Random Pick
         </button>
       </div>
-    </TabsContent>
-
-
-    {/* AUTO */}
-    <TabsContent value="auto" className="flex flex-col gap-4">
-    <div className="">
-        {isPlaying && (
-          <div className="bg-white/10 border border-white/20 rounded-lg px-4 py-3 flex items-center justify-between">
-            <div>
-              <div className="text-xs text-white/60 mb-1">Multiplier</div>
-              <div className="text-2xl font-semibold text-white">
-                {multiplier.toFixed(2)}x
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-xs text-white/60 mb-1">Available</div>
-              <div className="text-lg font-semibold text-white">
-                {(betAmount * multiplier).toFixed(2)} STT
-              </div>
-            </div>
-          </div>
-        )}
-        {gameHash && (
-          <div className={`bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 ${isPlaying ? 'mt-2' : ''}`}>
-            <div className="text-xs font-medium text-white mb-2">Provable Fair Hash</div>
-            <div className="text-[10px] font-mono text-white/80 break-all mb-2">
-              {gameHash}
-            </div>
-            {serverSeedHash && (
-              <div className="text-[10px] font-mono text-white/60 mb-2">
-                Server Seed: {serverSeedHash.slice(0, 16)}...
-              </div>
-            )}
-            {status === 'playing' ? (
-              <div className="text-[10px] text-white/50">
-                Verify link available after game ends
-              </div>
-            ) : (
-              <button
-                onClick={async () => {
-                  if (!serverSeed && gameId) {
-                    const revealedSeed = await revealServerSeed();
-                    if (revealedSeed) {
-                      window.open(
-                        `/verify?hash=${gameHash}&serverSeed=${revealedSeed}&clientSeed=${clientSeed}&mines=${mineCount}&mode=${mode}&bet=${betAmount}`,
-                        '_blank'
-                      );
-                    }
-                  } else if (serverSeed) {
-                    window.open(
-                      `/verify?hash=${gameHash}&serverSeed=${serverSeed}&clientSeed=${clientSeed}&mines=${mineCount}&mode=${mode}&bet=${betAmount}`,
-                      '_blank'
-                    );
-                  }
-                }}
-                className="text-sm w-fit bg-[#54B6A0]  text-white p-2 rounded-lg  hover:text-white underline cursor-pointer"
-              >
-                Verify Game
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className="">
-        <div className="flex justify-between items-center">
-          <label className="text-base font-medium text-gray-300">
-            Bet Amount
-          </label>
-        </div>
-        {hasInsufficientBalance && (
-          <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-                <div className="text-sm text-red-300">
-                <div className="font-medium">Insufficient Balance</div>
-                <div className="text-xs">
-                  You need {numericBetValue.toFixed(2)} STT but only have{" "}
-                  {userBalance?.balance.toFixed(2)} STT
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        {isBelowMinimum && (
-          <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <div className="text-sm text-yellow-300">
-                <div className="font-medium">Minimum Bet Required</div>
-                <div className="text-xs">Minimum bet amount is 0.01 STT</div>
-              </div>
-            </div>
-          </div>
-        )}
-        <div className="relative flex">
-          <Input
-            placeholder="0.00"
-            type="number"
-            value={betInputValue}
-            disabled={isPlaying}
-            onChange={handleBetAmountChange}
-            step="0.01"
-            className="flex-1 text-lg px-4 py-6 rounded-none focus:outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 border-gray-600 bg-black text-white rounded-l-lg"
-          />
-          <div className="flex">
-            <button
-              onClick={handleBetHalf}
-              disabled={isPlaying}
-              className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-500 text-sm text-white  disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              1/2
-            </button>
-            <button
-              onClick={handleBetDouble}
-              disabled={isPlaying}
-              className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-500 text-sm text-white rounded-r-lg  disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              2x
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="">
-        <label className="block text-base font-medium text-gray-300">
-          Mines
-        </label>
-        <div className="relative">
-          <Select
-            value={mineCount.toString()}
-            onValueChange={(val) => {
-              const value = parseInt(val) || 1;
-              setMineCount(Math.min(Math.max(value, 1), 24));
-            }}
-            disabled={isPlaying}
-          >
-            <SelectTrigger className="w-full h-12 px-4 bg-black rounded-lg text-white border-[#51545F] focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed">
-              <SelectValue placeholder="Select Mines" />
-            </SelectTrigger>
-            <SelectContent className="bg-black border border-gray-700 text-white max-h-[300px]">
-              {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
-                <SelectItem key={num} value={num.toString()} className="cursor-pointer">
-                  {num} {num === 1 ? 'Mine' : 'Mines'}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="">
-        <label className="block text-base font-medium text-gray-300">
-          Number of Mines (1-24)
-        </label>
-        <div className="relative">
-          <Select
-            value={mineCount.toString()}
-            onValueChange={(val) => {
-              const value = parseInt(val) || 1;
-              setMineCount(Math.min(Math.max(value, 1), 24));
-            }}
-            disabled={isPlaying}
-          >
-            <SelectTrigger className="w-full h-12 px-4 bg-black rounded-lg text-white border-[#51545F] focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed">
-              <SelectValue placeholder="Select Mines" />
-            </SelectTrigger>
-            <SelectContent className="bg-black border border-gray-700 text-white max-h-[300px]">
-              {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
-                <SelectItem key={num} value={num.toString()} className="cursor-pointer">
-                  {num} {num === 1 ? 'Mine' : 'Mines'}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-gray-400 mt-1">
-            💎 Safe tiles: {25 - mineCount} | 💣 Mines: {mineCount}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2 md:mt-4">
-        <label className="text-base font-medium text-gray-300">
-            Number of Auto Bets
-          </label>
-          <Input
-            placeholder="10"
-            type="number"
-            value={autoBetCount}
-            onChange={(e) => {
-              const value = e.target.value;
-              // Only allow positive integers
-              if (value === "" || /^\d+$/.test(value)) {
-                setAutoBetCount(value);
-              }
-            }}
-            min="1"
-            step="1"
-            disabled={isPlaying}
-            className="flex-1 text-lg focus:outline-none focus-visible:outline-none focus-visible:ring-0 px-4 py-4 rounded-none focus:outline-none border-gray-600 bg-black text-white! rounded-lg"
-          />
-
-
-{/* Auto-bet Error Message */}
-        {autoBetError && (
-          <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 text-sm text-red-300">
-            ❌ {autoBetError}
-          </div>
-        )}
-
-        {/* Auto-bet Status */}
-        {isAutoBetting && (
-          <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg p-3 text-sm text-blue-300">
-            🤖 Auto-betting... {autoBetRemaining} bet{autoBetRemaining !== 1 ? 's' : ''} remaining
-          </div>
-        )}
-
-        <motion.button
-          onClick={() => {
-            if (isAutoBetting) {
-              handleStopAutoBet();
-            } else if (canCashOut) {
-              handleCashOut();
-            } else if (canReset) {
-              // Reset the game and allow new bet
-              resetGame();
-              setBetInputValue("");
-            } else if (canStart) {
-              handleStartAutoBet();
-            }
-          }}
-          disabled={!isAutoBetting && !canStart && !canCashOut && !canReset}
-          className={`w-full py-3 mt-4 bg-[#945DF8] hover:bg-[#945DF8]/80 transition-all duration-150 text-white ${
-            isPlaying ? "rounded-b-lg" : "rounded-lg"
-          } font-semibold text-lg`}
-          whileTap={isAutoBetting || canStart || canCashOut || canReset ? { scale: 0.98 } : {}}
-        >
-          {isAutoBetting
-            ? "Stop Auto-Bet"
-            : hasInsufficientBalance
-            ? "Insufficient Balance"
-            : isBelowMinimum
-            ? "Minimum 0.01 STT"
-            : canCashOut
-            ? "Cashout"
-            : canReset
-            ? "Play Again"
-            : canStart
-            ? "Start Autobet"
-            : "Start Autobet"}
-        </motion.button>
-      </div>
-    </TabsContent>
-  </TabsContents>
-</Tabs>
+    </div>
     </div>
   );
 };

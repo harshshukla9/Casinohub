@@ -5,6 +5,7 @@ import { useGameStore, type TileState } from "../store/gameStore";
 import { useAccount } from "wagmi";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { toast } from "sonner";
 
 interface TileProps {
   tile: TileState;
@@ -176,6 +177,8 @@ export const GameBoard = () => {
   } = useGameStore();
   const [showMultiplierPopup, setShowMultiplierPopup] = useState(false);
   const [lastMultiplier, setLastMultiplier] = useState(1);
+  const [showExplosion, setShowExplosion] = useState(false);
+  const [explodedTile, setExplodedTile] = useState<{ row: number; col: number } | null>(null);
 
   const gridMines = grid.slice(0, 6);
 
@@ -246,6 +249,69 @@ export const GameBoard = () => {
     }
   }, [multiplier]);
 
+  // Listen for trap reveal event to show explosion feedback
+  useEffect(() => {
+    const handleTrapReveal = (event: CustomEvent) => {
+      const { row, col } = event.detail || {};
+      if (row !== undefined && col !== undefined) {
+        setExplodedTile({ row, col });
+        setShowExplosion(true);
+        setTimeout(() => {
+          setShowExplosion(false);
+          setExplodedTile(null);
+        }, 800);
+      }
+    };
+
+    window.addEventListener('game:trapReveal', handleTrapReveal as EventListener);
+    return () => {
+      window.removeEventListener('game:trapReveal', handleTrapReveal as EventListener);
+    };
+  }, []);
+
+  // Show explosion and toast when status changes to lost
+  useEffect(() => {
+    if (status === 'lost') {
+      setShowExplosion(true);
+      setTimeout(() => {
+        setShowExplosion(false);
+      }, 1000);
+
+      // Show toast with profit and play again button
+      const lossAmount = betAmount;
+      toast.custom(
+        (t) => (
+          <div 
+            className="flex flex-col gap-3 bg-black text-white p-4 rounded-lg border border-white/20 shadow-lg min-w-[300px]"
+            style={{ backgroundColor: "#000000", color: "#ffffff" }}
+          >
+            <div className="text-center">
+              <div className="text-lg font-bold text-white mb-1">Game Over!</div>
+              <div className="text-sm text-white/80">
+                You lost {lossAmount.toFixed(2)} STT
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                const { resetGame } = useGameStore.getState();
+                resetGame();
+                window.dispatchEvent(new CustomEvent("balanceUpdated"));
+                toast.dismiss(t);
+              }}
+              className="w-full bg-[#945DF8] hover:bg-[#945DF8]/80 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+            >
+              Play Again
+            </button>
+          </div>
+        ),
+        {
+          position: "bottom-center",
+          duration: 10000,
+        }
+      );
+    }
+  }, [status, betAmount]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const assetSources = [
@@ -289,6 +355,19 @@ export const GameBoard = () => {
 
   return (
     <div className="relative h-[68vh] lg:h-full lg:rounded-xl overflow-hidden w-full">
+      {/* Explosion flash overlay */}
+      {showExplosion && (
+        <motion.div
+          className="absolute inset-0 z-100 pointer-events-none"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 0.7, 0] }}
+          transition={{ duration: 0.8 }}
+          style={{
+            background: "radial-gradient(circle, rgba(255, 0, 0, 0.7) 0%, rgba(255, 100, 0, 0.5) 50%, transparent 100%)",
+          }}
+        />
+      )}
+
       <div
         className="h-full w-full z-10 object-cover lg:rounded-xl overflow-hidden"
         style={{
@@ -298,6 +377,8 @@ export const GameBoard = () => {
           backgroundRepeat: "no-repeat",
         }}
       />
+
+      <Image src="/LOGO/Dragon.svg" alt="Dragon" width={100} height={100} className="absolute bottom-0 right-2 w-22 md:w-[12vw] z-50" />
 
       <div className="h-full w-full z-10">
         <div className="absolute top-[-10px] left-1/3 transform -translate-x-1/2 z-30 flex justify-center items-center">
@@ -332,7 +413,7 @@ export const GameBoard = () => {
           <div className="relative w-[95vw] sm:w-[90vw] md:w-[80vw] lg:w-[50vw] z-10 p-3 sm:p-4 md:p-6 lg:p-7 xl:p-10 overflow-hidden h-[50vh] sm:h-[55vh] md:h-[60vh] lg:h-[82vh] xl:h-[85vh] flex flex-col items-center justify-center">
             <div className="absolute inset-0 bg-[url('/all%20assets/MineFrame.svg')] bg-contain md:bg-contain lg:bg-contain xl:bg-cover bg-no-repeat bg-center pointer-events-none" />
             <div
-              className={`grid grid-cols-5 p-6 md:gap-2 z-20 h-full w-full items-center justify-center overflow-hidden`}
+              className={`grid grid-cols-5 p-6 md:py-2 md:gap-2 z-20 h-full w-full items-center justify-center overflow-hidden`}
               style={{ gridAutoRows: "1fr" }}
             >
               {gridMines.map((row, rowIdx) =>
@@ -375,6 +456,8 @@ export const GameBoard = () => {
                     return null;
                   };
 
+                  const isExploded = explodedTile?.row === rowIdx && explodedTile?.col === colIdx;
+
                   return (
                     <motion.div
                       key={`${rowIdx}-${colIdx}`}
@@ -390,7 +473,31 @@ export const GameBoard = () => {
                       }}
                       onClick={() => isClickable && clickTile(rowIdx, colIdx)}
                       whileTap={isClickable ? { scale: 0.95 } : {}}
+                      animate={
+                        isExploded
+                          ? {
+                              scale: [1, 1.3, 1],
+                              backgroundColor: ["transparent", "rgba(255, 0, 0, 0.5)", "transparent"],
+                            }
+                          : {}
+                      }
+                      transition={
+                        isExploded
+                          ? {
+                              duration: 0.6,
+                              ease: "easeOut",
+                            }
+                          : {}
+                      }
                     >
+                      {isExploded && (
+                        <motion.div
+                          className="absolute inset-0 bg-red-500/50 rounded-lg"
+                          initial={{ opacity: 0, scale: 0 }}
+                          animate={{ opacity: [0, 1, 0], scale: [0, 2, 0] }}
+                          transition={{ duration: 0.6 }}
+                        />
+                      )}
                       <div className="w-full h-full max-w-full max-h-full flex items-center justify-center p-1 absolute inset-0">
                         {getTileContent()}
                       </div>
