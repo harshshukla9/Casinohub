@@ -6,13 +6,14 @@ import { UserBalanceDisplay } from './Home/UserBalanceDisplay';
 import { AudioController } from './AudioController';
 import { User } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover';
+import Image from 'next/image';
 
 export const Header = () => {
   return (
-    <header className="bg-[#240B53] border-b border-white/10">
+    <header className="bg-[#1F2326] border-b border-white/10">
       <div className="w-full px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between gap-4 mb-3">
-          <h1 className='text-xl font-bold text-white'>Karma Mines</h1>
+          <Image src="/LOGO/LogooMines.svg" alt="Karma Mines" width={100} height={100} classNamew="w-full h-full" />
           <Popover>
             <PopoverTrigger asChild>
               <button
@@ -35,14 +36,18 @@ export const Header = () => {
                 <div className="pt-2 border-t border-white/10">
                   <DepositButton />
                 </div>
+                <div className="pt-2 border-t border-white/10">
+                  <UserBalanceDisplay />
+                </div>
               </div>
+
             </PopoverContent>
           </Popover>
         </div>
 
-        <div className="flex items-center justify-between w-full">
+        {/* <div className="flex items-center justify-between w-full">
           <UserBalanceDisplay />
-        </div>
+        </div> */}
       </div>
     </header>
   );

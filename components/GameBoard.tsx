@@ -177,9 +177,7 @@ export const GameBoard = () => {
   const [showMultiplierPopup, setShowMultiplierPopup] = useState(false);
   const [lastMultiplier, setLastMultiplier] = useState(1);
 
-  console.log("grid here", grid);
   const gridMines = grid.slice(0, 6);
-  console.log("grid mines here", gridMines);
 
   const getGridConfig = () => {
     switch (mode) {
@@ -290,13 +288,13 @@ export const GameBoard = () => {
   const currentPayout = betAmount * multiplier;
 
   return (
-    <div className="relative h-[50vh] md:h-[53vh] lg:h-full lg:rounded-xl overflow-hidden w-full">
+    <div className="relative h-[68vh] lg:h-full lg:rounded-xl overflow-hidden w-full">
       <div
-        className="h-full w-full z-10 object-cover"
+        className="h-full w-full z-10 object-cover lg:rounded-xl overflow-hidden"
         style={{
-          backgroundImage: "url(/all%20assets/karmaClimberBg.svg)",
+          backgroundImage: "url(/all%20assets/TestBg.svg)",
           backgroundSize: "cover",
-          backgroundPosition: "center",
+          backgroundPosition: "top",
           backgroundRepeat: "no-repeat",
         }}
       />
@@ -330,270 +328,79 @@ export const GameBoard = () => {
           ></motion.div>
         )}
 
-        {status === "playing" && revealedSafeTiles > 0 && (
-          <motion.div
-            className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-20"
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <button
-              onClick={async () => {
-                if (!address) return;
-
-                try {
-                  const response = await fetch("/api/cashout", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      walletAddress: address,
-                      betAmount: betAmount,
-                      multiplier: multiplier,
-                    }),
-                  });
-
-                  if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || "Failed to cashout");
-                  }
-
-                  const result = await response.json();
-                  console.log("Cashout successful:", result);
-
-                  window.dispatchEvent(new CustomEvent("balanceUpdated"));
-
-                  const { cashOut } = useGameStore.getState();
-                  cashOut();
-                } catch (error) {
-                  console.error("Failed to cashout:", error);
-                  alert(
-                    `Failed to cashout: ${
-                      error instanceof Error ? error.message : "Unknown error"
-                    }`
-                  );
-                }
-              }}
-              className="bg-gradient-to-r whitespace-nowrap from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white px-6 py-2 fixed bottom-2 left-1/2 transform -translate-x-1/2 z-50 rounded-xl font-bold transition-all duration-200 shadow-lg shadow-yellow-500/30 border border-yellow-400/50 text-base"
+        <div className="flex flex-col md:items-center lg:items-start absolute top-16 left-1/2 -translate-x-1/2 sm:top-4 md:top-4 lg:top-8 xl:top-15 lg:left-[65%] lg:-translate-x-1/2 h-full w-full lg:w-full px-2 sm:px-3 md:px-4 lg:px-4">
+          <div className="relative w-[95vw] sm:w-[90vw] md:w-[80vw] lg:w-[50vw] z-10 p-3 sm:p-4 md:p-6 lg:p-7 xl:p-10 overflow-hidden h-[50vh] sm:h-[55vh] md:h-[60vh] lg:h-[82vh] xl:h-[85vh] flex flex-col items-center justify-center">
+            <div className="absolute inset-0 bg-[url('/all%20assets/MineFrame.svg')] bg-contain md:bg-contain lg:bg-contain xl:bg-cover bg-no-repeat bg-center pointer-events-none" />
+            <div
+              className={`grid grid-cols-5 p-6 md:gap-2 z-20 h-full w-full items-center justify-center overflow-hidden`}
+              style={{ gridAutoRows: "1fr" }}
             >
-              Cash Out {currentPayout.toFixed(2)} STT
-            </button>
-          </motion.div>
-        )}
+              {gridMines.map((row, rowIdx) =>
+                row.map((tile, colIdx) => {
+                  const isClickable = status === "playing" && tile === "hidden";
 
-        <div className="flex flex-col md:items-center lg:items-start absolute top-2 left-1/2 -translate-x-1/2 sm:top-4 md:top-4 lg:top-8 xl:top-15 lg:left-[65%] lg:-translate-x-1/2 h-full w-full lg:w-full px-2 sm:px-3 md:px-4 lg:px-4">
-          <div 
-          className="relative w-[95vw] sm:w-[90vw] md:w-[60vw] lg:w-[50vw] z-10 p-3 sm:p-4 md:p-6 lg:p-7 xl:p-10 overflow-hidden h-[50vh] sm:h-[55vh] md:h-[40vh] lg:h-[82vh] xl:h-[85vh] flex flex-col items-center justify-center" 
-          >
-        <div 
-          className="absolute inset-0 bg-[url('/all%20assets/MineFrame.svg')] bg-contain md:bg-contain lg:bg-contain xl:bg-cover bg-no-repeat bg-center pointer-events-none"
-        />
-              <div
-                className={`grid grid-cols-5 gap-1.5 sm:gap-2 md:gap-2 lg:gap-2.5 xl:gap-3 z-20 p-4 py-6 sm:p-5 md:p-6 lg:p-7 xl:p-9 h-full w-full items-center justify-center overflow-hidden`}
-                style={{ gridAutoRows: '1fr' }}
-              >
-                 {gridMines.map((row, rowIdx) =>
-                   row.map((tile, colIdx) => {
-                    const isClickable = status === "playing" && tile === "hidden";
+                  const getTileBackground = () => {
+                    if (tile === "hidden") {
+                      return "url('/all%20assets/withoutOpenTile.svg')";
+                    }
+                    return "url('/all%20assets/withOpenTile.svg')";
+                  };
 
-                     const getTileBackground = () => {
-                       if (tile === "hidden") {
-                        return "url('/all%20assets/withoutOpen.svg')";
-                       }
-                      return "url('/all%20assets/withOpen.svg')";
-                     };
+                  const getTileContent = () => {
+                    if (tile === "hidden") {
+                      return "";
+                    } else if (tile === "safe") {
+                      return (
+                        <Image
+                          key={`safe-${rowIdx}-${colIdx}`}
+                          width={30}
+                          height={30}
+                          src="/all%20assets/purpleMines.svg"
+                          alt="Safe"
+                          className="w-[60%] h-[60%] md:w-[60%] md:h-[60%] lg:w-[70%] lg:h-[70%] object-contain"
+                        />
+                      );
+                    } else if (tile === "trap") {
+                      return (
+                        <Image
+                          width={35}
+                          height={35}
+                          src="/all%20assets/Dynamite.svg"
+                          alt="trap"
+                          className="w-[60%] h-[60%] md:w-[65%] md:h-[65%] lg:w-[70%] lg:h-[70%] object-contain"
+                        />
+                      );
+                    }
+                    return null;
+                  };
 
-                     const getTileContent = () => {
-                       if (tile === "hidden") {
-                         return "";
-                       } else if (tile === "safe") {
-                         return (
-                           <Image 
-                           key={`safe-${rowIdx}-${colIdx}`}
-                               width={30} 
-                               height={30} 
-                               src="/all%20assets/purpleMines.svg"
-                               alt="Safe"
-                               className="w-[60%] h-[60%] md:w-[60%] md:h-[60%] lg:w-[70%] lg:h-[70%] object-contain" 
-                             />
-                         );
-                       } else if (tile === "trap") {
-                         return (
-                             <Image 
-                               width={35} 
-                               height={35} 
-                               src="/all%20assets/Dynamite.svg" 
-                               alt="trap" 
-                               className="w-[60%] h-[60%] md:w-[65%] md:h-[65%] lg:w-[70%] lg:h-[70%] object-contain" 
-                             />
-                         );
-                       }
-                       return null;
-                     };
-
-                     return (
-                      <motion.div
-                        key={`${rowIdx}-${colIdx}`}
-                        className={`aspect-square h-full w-full max-h-full max-w-full rounded-lg flex items-center justify-center text-white text-2xl font-bold overflow-hidden relative ${
-                          isClickable
-                            ? "cursor-pointer hover:brightness-110"
-                            : "cursor-not-allowed"
-                        }`}
-                        style={{
-                          backgroundColor:
-                          tile === "hidden" ? "transparent" : "",
-                          backgroundImage: getTileBackground(),
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                          backgroundRepeat:"no-repeat",
-                          minHeight: 0,
-                          minWidth: 0,
-                          height: '100%',
-                          width: '100%'
-                        }}
-                         onClick={() => isClickable && clickTile(rowIdx, colIdx)}
-                        whileTap={isClickable ? { scale: 0.95 } : {}}
-                      >
-                         <div className="w-full h-full max-w-full max-h-full flex items-center justify-center p-1 absolute inset-0">
-                           {getTileContent()}
-                         </div>
-                      </motion.div>
-                    );
-                  })
-                )}
-              </div>
-
-
-
+                  return (
+                    <motion.div
+                      key={`${rowIdx}-${colIdx}`}
+                      className={`aspect-square md:h-[9vh] lg:h-[14vh] h-[8vh] w-full max-h-full max-w-full rounded-lg flex items-center justify-center text-white text-2xl font-bold overflow-hidden relative ${
+                        isClickable ? "cursor-pointer " : "cursor-not-allowed"
+                      }`}
+                      style={{
+                        backgroundColor: tile === "hidden" ? "transparent" : "",
+                        backgroundImage: getTileBackground(),
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        backgroundRepeat: "no-repeat",
+                      }}
+                      onClick={() => isClickable && clickTile(rowIdx, colIdx)}
+                      whileTap={isClickable ? { scale: 0.95 } : {}}
+                    >
+                      <div className="w-full h-full max-w-full max-h-full flex items-center justify-center p-1 absolute inset-0">
+                        {getTileContent()}
+                      </div>
+                    </motion.div>
+                  );
+                })
+              )}
+            </div>
           </div>
         </div>
       </div>
-
-      {(status === "won" || status === "cashed_out") && (
-        <motion.div
-          className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 "
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <motion.div
-            className="text-center relative flex flex-col items-center"
-            initial={{ scale: 0.5, y: -100 }}
-            animate={{ scale: 1, y: 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 260,
-              damping: 20,
-              duration: 0.6,
-            }}
-          >
-            <div
-              className="relative flex flex-col items-center justify-center"
-              style={{
-                backgroundImage: "url(/all%20assets/Treasure_chest_Glow.png)",
-                backgroundSize: "contain",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-                width: "280px",
-                height: "280px",
-              }}
-            >
-              <motion.div
-                className="absolute left-[50%] whitespace-nowrap top-[62%] -translate-x-1/2 -translate-y-1/2"
-                initial={{ opacity: 0, y: 60 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.4, ease: "easeOut" }}
-              >
-                <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl px-4 py-2 left-1/2 transform -translate-x-1/2 border-2 border-yellow-400 shadow-xl text-center">
-                  <div className="text-sm font-bold text-yellow-400">
-                    {multiplier.toFixed(2)}x
-                  </div>
-                  <div className="text-sm font-bold text-white">
-                    {(betAmount * multiplier).toFixed(2)} STT
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-
-            <motion.button
-              onClick={() => {
-                const { resetGame } = useGameStore.getState();
-                resetGame();
-                window.dispatchEvent(new CustomEvent("balanceUpdated"));
-              }}
-              className="mt-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white px-8 py-3 rounded-xl font-bold transition-all duration-200 shadow-lg"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7, duration: 0.5 }}
-            >
-              Play Again
-            </motion.button>
-          </motion.div>
-        </motion.div>
-      )}
-      {(status === "lost") && (
-        <motion.div
-          className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 "
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <motion.div
-            className="text-center relative flex flex-col items-center"
-            initial={{ scale: 0.5, y: -100 }}
-            animate={{ scale: 1, y: 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 260,
-              damping: 20,
-              duration: 0.6,
-            }}
-          >
-            <div
-              className="relative flex flex-col items-center justify-center"
-              style={{
-                backgroundImage: "url(/all%20assets/Lost%20chest.png)",
-                backgroundSize: "contain",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-                width: "200px",
-                height: "200px",
-              }}
-            >
-              <motion.div
-                className="absolute left-[54%] top-[68%] -translate-x-1/2 -translate-y-1/2"
-                initial={{ opacity: 0, y: 60 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.4, ease: "easeOut" }}
-              >
-                <div className="bg-gradient-to-r whitespace-nowrap from-red-600 to-red-800 rounded-xl ml-[-60px] mt-[-45px] px-4 py-2 border-2 border-red-400 shadow-xl text-center">
-                  <div className="text-sm font-bold text-yellow-400">
-                    LOST
-                  </div>
-                  <div className="text-sm font-bold text-white">
-                  {betAmount.toFixed(2)} STT
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-
-            <motion.button
-              onClick={() => {
-                const { resetGame } = useGameStore.getState();
-                resetGame();
-                window.dispatchEvent(new CustomEvent("balanceUpdated"));
-              }}
-              className="mt-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white px-8 py-3 rounded-xl font-bold transition-all duration-200 shadow-lg"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7, duration: 0.5 }}
-            >
-              Play Again
-            </motion.button>
-          </motion.div>
-        </motion.div>
-      )}
     </div>
   );
 };
