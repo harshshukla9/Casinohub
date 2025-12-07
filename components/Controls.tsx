@@ -29,6 +29,12 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
   const [userBalance, setUserBalance] = useState<UserBalanceData | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [betInputValue, setBetInputValue] = useState<string>("");
+  const [autoBetCount, setAutoBetCount] = useState<string>("5");
+  
+  // Auto-bet state
+  const [isAutoBetting, setIsAutoBetting] = useState(false);
+  const [autoBetRemaining, setAutoBetRemaining] = useState(0);
+  const [autoBetError, setAutoBetError] = useState("");
   const numericBetValue =
     betInputValue === "" ? 0 : parseFloat(betInputValue) || 0;
 
@@ -43,6 +49,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
     serverSeed,
     clientSeed,
     gameId,
+    grid,
     setMode,
     setMineCount,
     setBetAmount,
@@ -52,6 +59,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
     resetGame,
     clearVerificationData,
     revealServerSeed,
+    clickTile,
   } = useGameStore();
 
   const isPlaying = status === "playing";
@@ -270,6 +278,135 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
     }
   };
 
+  // Random tile picker for auto-bet
+  const pickRandomTile = useCallback(() => {
+    if (status !== 'playing') return;
+    
+    // Find all hidden tiles
+    const hiddenTiles: { row: number; col: number }[] = [];
+    grid.forEach((row, rowIndex) => {
+      row.forEach((tile, colIndex) => {
+        if (tile === 'hidden') {
+          hiddenTiles.push({ row: rowIndex, col: colIndex });
+        }
+      });
+    });
+
+    if (hiddenTiles.length === 0) return;
+
+    // Pick a random hidden tile
+    const randomIndex = Math.floor(Math.random() * hiddenTiles.length);
+    const { row, col } = hiddenTiles[randomIndex];
+    
+    clickTile(row, col);
+  }, [status, grid, clickTile]);
+
+  // Auto-bet logic - Start new game when needed
+  useEffect(() => {
+    if (!isAutoBetting) return;
+    if (status !== 'idle' && status !== 'won' && status !== 'lost' && status !== 'cashed_out') return;
+    if (autoBetRemaining <= 0) {
+      setIsAutoBetting(false);
+      fetchUserBalance();
+      return;
+    }
+
+    const startNextGame = async () => {
+      try {
+        clearVerificationData();
+        resetGame();
+        const wagerAmount = Math.round(numericBetValue * 100) / 100;
+        setBetAmount(wagerAmount);
+
+        const response = await fetch("/api/bet", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            walletAddress: address,
+            betAmount: wagerAmount,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to place bet");
+        }
+
+        const result = await response.json();
+        
+        setUserBalance((prev) => prev ? {
+          ...prev,
+          balance: result.newBalance,
+        } : null);
+
+        await startGame();
+        setAutoBetRemaining(prev => prev - 1);
+      } catch (error) {
+        console.error("Auto-bet failed:", error);
+        setIsAutoBetting(false);
+        setAutoBetRemaining(0);
+        setAutoBetError(error instanceof Error ? error.message : "Auto-bet failed");
+        setTimeout(() => setAutoBetError(""), 5000);
+      }
+    };
+
+    const timer = setTimeout(startNextGame, 500);
+    return () => clearTimeout(timer);
+  }, [isAutoBetting, status, autoBetRemaining, numericBetValue, address]);
+
+  // Auto-bet logic - Pick random tiles during gameplay
+  useEffect(() => {
+    if (!isAutoBetting || status !== 'playing') return;
+
+    const revealInterval = setInterval(() => {
+      pickRandomTile();
+    }, 800); // Pick a tile every 800ms
+
+    return () => clearInterval(revealInterval);
+  }, [isAutoBetting, status, pickRandomTile]);
+
+  // Handle auto-bet start
+  const handleStartAutoBet = () => {
+    const count = parseInt(autoBetCount) || 0;
+    const totalRequired = numericBetValue * count;
+
+    if (!address) {
+      setAutoBetError('Please connect your wallet first');
+      setTimeout(() => setAutoBetError(""), 3000);
+      return;
+    }
+
+    if (count <= 0) {
+      setAutoBetError('Please enter a valid number of bets');
+      setTimeout(() => setAutoBetError(""), 3000);
+      return;
+    }
+
+    if (numericBetValue < 0.01) {
+      setAutoBetError('Minimum bet amount is 0.01 STT');
+      setTimeout(() => setAutoBetError(""), 3000);
+      return;
+    }
+
+    if (userBalance && totalRequired > userBalance.balance) {
+      setAutoBetError(`Insufficient balance. Need ${totalRequired.toFixed(2)} STT for ${count} bets`);
+      setTimeout(() => setAutoBetError(""), 5000);
+      return;
+    }
+
+    setAutoBetError('');
+    setIsAutoBetting(true);
+    setAutoBetRemaining(count);
+  };
+
+  // Stop auto-bet
+  const handleStopAutoBet = () => {
+    setIsAutoBetting(false);
+    setAutoBetRemaining(0);
+  };
+
   const totalProfit = betAmount * multiplier - betAmount;
 
   return (
@@ -379,91 +516,76 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
             </div>
           </div>
         )}
-        <div className="relative flex">
-          <Input
-            placeholder="0.00"
-            type="number"
-            value={betInputValue}
-            disabled={isPlaying}
-            onChange={handleBetAmountChange}
-            step="0.01"
-            className="flex-1 text-lg px-4 py-6 rounded-none active:outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 border-gray-600 bg-black text-white rounded-l-lg"
-          />
-          <div className="flex">
-            <button
-              onClick={handleBetHalf}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Input
+              placeholder="0.00"
+              type="number"
+              value={betInputValue}
               disabled={isPlaying}
-              className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-500 text-sm text-white  disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              1/2
-            </button>
-            <button
-              onClick={handleBetDouble}
-              disabled={isPlaying}
-              className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-500 text-sm text-white rounded-r-lg  disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              2x
-            </button>
+              onChange={handleBetAmountChange}
+              step="0.01"
+              className="w-full text-lg px-4 py-6 h-14 border-gray-600 bg-[#1E2838] text-white rounded-lg pr-12"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-500 text-xl">
+              🪙
+            </span>
           </div>
+          <button
+            onClick={handleBetHalf}
+            disabled={isPlaying}
+            className="px-6 h-14 bg-[#2A3441] hover:bg-gray-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+          >
+            ½
+          </button>
+          <button
+            onClick={handleBetDouble}
+            disabled={isPlaying}
+            className="px-5 h-14 bg-[#2A3441] hover:bg-gray-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+          >
+            2×
+          </button>
         </div>
       </div>
 
+      {/* Gems */}
       <div className="">
         <label className="block text-base font-medium text-gray-300">
-          Mines
+          Gems
         </label>
-        <div className="relative">
-          <Select
-            value={mineCount.toString()}
-            onValueChange={(val) => {
-              const value = parseInt(val) || 1;
-              setMineCount(Math.min(Math.max(value, 1), 24));
-            }}
-            disabled={isPlaying}
-          >
-            <SelectTrigger className="w-full h-12 px-4 bg-black rounded-lg text-white border-[#51545F] focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed">
-              <SelectValue placeholder="Select Mines" />
-            </SelectTrigger>
-            <SelectContent className="bg-black border border-gray-700 text-white max-h-[300px]">
-              {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
-                <SelectItem key={num} value={num.toString()} className="cursor-pointer">
-                  {num} {num === 1 ? 'Mine' : 'Mines'}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="w-full h-14 px-4 bg-[#1E2838] rounded-lg text-white text-lg border border-gray-600 flex items-center">
+          {25 - mineCount}
         </div>
       </div>
 
+      {/* Total Profit */}
       <div className="">
-        <label className="block text-base font-medium text-gray-300">
-          Number of Mines (1-24)
-        </label>
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-base font-medium text-gray-300">
+            Total Profit ({multiplier.toFixed(2)}×)
+          </label>
+          <span className="text-sm text-gray-400">
+            ${(betAmount * multiplier - betAmount).toFixed(2)}
+          </span>
+        </div>
         <div className="relative">
-          <Select
-            value={mineCount.toString()}
-            onValueChange={(val) => {
-              const value = parseInt(val) || 1;
-              setMineCount(Math.min(Math.max(value, 1), 24));
-            }}
-            disabled={isPlaying}
-          >
-            <SelectTrigger className="w-full h-12 px-4 bg-black rounded-lg text-white border-[#51545F] focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed">
-              <SelectValue placeholder="Select Mines" />
-            </SelectTrigger>
-            <SelectContent className="bg-black border border-gray-700 text-white max-h-[300px]">
-              {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
-                <SelectItem key={num} value={num.toString()} className="cursor-pointer">
-                  {num} {num === 1 ? 'Mine' : 'Mines'}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-gray-400 mt-1">
-            💎 Safe tiles: {25 - mineCount} | 💣 Mines: {mineCount}
-          </p>
+          <div className="w-full h-14 px-4 bg-[#1E2838] rounded-lg text-white text-lg border border-gray-600 flex items-center pr-12">
+            {(betAmount * multiplier - betAmount).toFixed(8)}
+          </div>
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-500 text-xl">
+            🪙
+          </span>
         </div>
       </div>
+
+      {/* Random Pick Button for Manual Mode */}
+      <button
+        onClick={pickRandomTile}
+        disabled={!isPlaying}
+        className="w-full py-3 bg-gray-700/50 hover:bg-gray-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        Random Pick
+      </button>
 
       <div className="flex flex-col gap-2 md:mt-4">
         <motion.button
@@ -693,27 +815,54 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
           <Input
             placeholder="10"
             type="number"
-            value="5"
+            value={autoBetCount}
+            onChange={(e) => {
+              const value = e.target.value;
+              // Only allow positive integers
+              if (value === "" || /^\d+$/.test(value)) {
+                setAutoBetCount(value);
+              }
+            }}
+            min="1"
             step="1"
+            disabled={isPlaying}
             className="flex-1 text-lg focus:outline-none focus-visible:outline-none focus-visible:ring-0 px-4 py-4 rounded-none focus:outline-none border-gray-600 bg-black text-white! rounded-lg"
           />
 
 
-<motion.button
+{/* Auto-bet Error Message */}
+        {autoBetError && (
+          <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 text-sm text-red-300">
+            ❌ {autoBetError}
+          </div>
+        )}
+
+        {/* Auto-bet Status */}
+        {isAutoBetting && (
+          <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg p-3 text-sm text-blue-300">
+            🤖 Auto-betting... {autoBetRemaining} bet{autoBetRemaining !== 1 ? 's' : ''} remaining
+          </div>
+        )}
+
+        <motion.button
           onClick={
-            canStart
-              ? handleStartGame
+            isAutoBetting
+              ? handleStopAutoBet
+              : canStart
+              ? handleStartAutoBet
               : canCashOut
               ? handleCashOut
-              : handleStartGame
+              : handleStartAutoBet
           }
-          disabled={!canStart && !canCashOut && !canReset}
+          disabled={!isAutoBetting && !canStart && !canCashOut && !canReset}
           className={`w-full py-3 mt-4 bg-[#945DF8] hover:bg-[#945DF8]/80 transition-all duration-150 text-white ${
             isPlaying ? "rounded-b-lg" : "rounded-lg"
           } font-semibold text-lg`}
-          whileTap={canStart || canCashOut || canReset ? { scale: 0.98 } : {}}
+          whileTap={isAutoBetting || canStart || canCashOut || canReset ? { scale: 0.98 } : {}}
         >
-          {hasInsufficientBalance
+          {isAutoBetting
+            ? "Stop Auto-Bet"
+            : hasInsufficientBalance
             ? "Insufficient Balance"
             : isBelowMinimum
             ? "Minimum 0.01 STT"

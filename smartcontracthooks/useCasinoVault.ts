@@ -1,7 +1,8 @@
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useWatchContractEvent } from 'wagmi'
-import { parseEther, formatEther } from 'viem'
-import { MonadVault } from '../lib/contract'
+import { parseUnits, formatUnits, type Address } from 'viem'
+import { MonadVault, STT_TOKEN_ADDRESS, ERC20_ABI } from '../lib/contract'
 import { useCallback, useEffect, useState } from 'react'
+import { useTokenAllowance, useApproveToken } from './useERC20'
 
 // Types for better type safety
 export interface DepositEvent {
@@ -23,39 +24,67 @@ export interface UseDepositEventsOptions {
 }
 
 /**
- * Hook to make deposits to the CasinoVault
+ * Hook to make deposits to the CasinoVault (ERC20 tokens)
+ * Note: Users must approve tokens before depositing
  * @param options - Configuration options for the deposit
  * @returns Object with deposit function and transaction state
  */
 export function useDeposit(options?: UseDepositOptions) {
+  const { address } = useAccount()
   const { writeContract, data: hash, error, isPending } = useWriteContract()
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
   })
 
+  // Get token decimals
+  const { data: decimals } = useReadContract({
+    address: STT_TOKEN_ADDRESS as Address,
+    abi: ERC20_ABI,
+    functionName: 'decimals',
+  })
+  const tokenDecimals = decimals ?? 18
+
+  // Check allowance
+  const { allowanceWei, refetch: refetchAllowance } = useTokenAllowance(
+    STT_TOKEN_ADDRESS as Address,
+    MonadVault.contractAddress as Address,
+    address
+  )
+
   const deposit = useCallback(
     async (amount: string) => {
       try {
-        const amountInWei = parseEther(amount)
+        const amountInWei = parseUnits(amount, tokenDecimals)
+        const vaultAddress = MonadVault.contractAddress as Address
+
+        // Check if approval is needed
+        if (allowanceWei < amountInWei) {
+          throw new Error('Insufficient token allowance. Please approve tokens first.')
+        }
+
+        // Deposit tokens
         await writeContract({
-          address: MonadVault.contractAddress as `0x${string}`,
+          address: vaultAddress,
           abi: MonadVault.abi,
           functionName: 'deposit',
-          value: amountInWei,
+          args: [amountInWei],
         })
       } catch (err) {
         options?.onError?.(err as Error)
+        throw err
       }
     },
-    [writeContract, options]
+    [writeContract, options, allowanceWei, tokenDecimals]
   )
 
   // Handle success callback
   useEffect(() => {
     if (isConfirmed && hash) {
       options?.onSuccess?.(hash)
+      // Refetch allowance after successful deposit
+      refetchAllowance()
     }
-  }, [isConfirmed, hash, options])
+  }, [isConfirmed, hash, options, refetchAllowance])
 
   return {
     deposit,
@@ -65,6 +94,12 @@ export function useDeposit(options?: UseDepositOptions) {
     isConfirming,
     isConfirmed,
     isLoading: isPending || isConfirming,
+    needsApproval: allowanceWei === BigInt(0),
+    allowanceWei,
+    amountNeedsApproval: (amount: string) => {
+      const amountInWei = parseUnits(amount, tokenDecimals)
+      return allowanceWei < amountInWei
+    },
   }
 }
 
@@ -87,8 +122,16 @@ export function usePlayerDeposits(playerAddress?: string) {
     },
   })
 
+  // Get token decimals for proper formatting
+  const { data: decimals } = useReadContract({
+    address: STT_TOKEN_ADDRESS as Address,
+    abi: ERC20_ABI,
+    functionName: 'decimals',
+  })
+  const tokenDecimals = decimals ?? 18
+
   return {
-    deposits: data ? formatEther(data as bigint) : '0',
+    deposits: data ? formatUnits(data as bigint, tokenDecimals) : '0',
     depositsWei: data ?? BigInt(0),
     error,
     isLoading,
@@ -107,8 +150,16 @@ export function useVaultBalance() {
     functionName: 'getBalance',
   })
 
+  // Get token decimals for proper formatting
+  const { data: decimals } = useReadContract({
+    address: STT_TOKEN_ADDRESS as Address,
+    abi: ERC20_ABI,
+    functionName: 'decimals',
+  })
+  const tokenDecimals = decimals ?? 18
+
   return {
-    balance: data ? formatEther(data as bigint) : '0',
+    balance: data ? formatUnits(data as bigint, tokenDecimals) : '0',
     balanceWei: data ?? BigInt(0),
     error,
     isLoading,

@@ -1,10 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useAccount, useBalance } from 'wagmi'
-import { statusNetworkSepolia } from 'viem/chains'
-import { formatEther } from 'viem'
-import { useDeposit, usePlayerDeposits } from '../../smartcontracthooks'
+import { useAccount } from 'wagmi'
+import { useDeposit, usePlayerDeposits, useTokenBalance, useTokenAllowance, useApproveToken, useApproveTokenMax } from '../../smartcontracthooks'
 
 interface WithdrawalHistory {
   _id: string
@@ -48,15 +46,44 @@ export function DepositButton() {
   const [isLoadingUserBalance, setIsLoadingUserBalance] = useState(false)
   const [userBalance, setUserBalance] = useState<number>(0)
 
-  const { data: balance, isLoading } = useBalance({
-    address,
-    chainId: statusNetworkSepolia.id,
-  })
+  // Notification state
+  const [successMessage, setSuccessMessage] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
 
-  const walletBalance = balance ? Number(formatEther(balance.value)) : 0
+  // Get ERC20 token balance instead of native balance
+  const { balance: tokenBalance, isLoading: isLoadingTokenBalance, refetch: refetchTokenBalance } = useTokenBalance()
+  const walletBalance = tokenBalance ? Number(tokenBalance) : 0
   const MIN_WITHDRAWAL_AMOUNT = 0.1
 
   const { deposits: contractDeposits, refetch: refetchDeposits } = usePlayerDeposits()
+
+  // Check token allowance
+  const { allowance, isLoading: isLoadingAllowance, refetch: refetchAllowance } = useTokenAllowance()
+
+  // Approve token hooks
+  const { approve, isPending: isApproving, isConfirmed: isApproveConfirmed, hash: approveHash } = useApproveToken({
+    onSuccess: () => {
+      refetchAllowance()
+      setSuccessMessage('Token approval successful! You can now deposit.')
+      setTimeout(() => setSuccessMessage(''), 5000)
+    },
+    onError: (error) => {
+      setErrorMessage(`Approval failed: ${error.message}`)
+      setTimeout(() => setErrorMessage(''), 5000)
+    },
+  })
+
+  const { approveMax, isPending: isApprovingMax, isConfirmed: isApproveMaxConfirmed } = useApproveTokenMax({
+    onSuccess: () => {
+      refetchAllowance()
+      setSuccessMessage('Unlimited token approval successful!')
+      setTimeout(() => setSuccessMessage(''), 5000)
+    },
+    onError: (error) => {
+      setErrorMessage(`Approval failed: ${error.message}`)
+      setTimeout(() => setErrorMessage(''), 5000)
+    },
+  })
 
   useEffect(() => {
     setIsMounted(true)
@@ -101,7 +128,7 @@ export function DepositButton() {
     }
   }, [isModalOpen, activeTab, fetchUserBalance, fetchWithdrawalHistory])
 
-  const { deposit, isLoading: isDepositing, isConfirmed } = useDeposit({
+  const { deposit, isLoading: isDepositing, isConfirmed, needsApproval, amountNeedsApproval } = useDeposit({
     onSuccess: async (txHash) => {
       if (processedTxHashes.current.has(txHash)) {
         return
@@ -109,7 +136,7 @@ export function DepositButton() {
       processedTxHashes.current.add(txHash)
       const amount = depositAmountRef.current
       if (!amount || parseFloat(amount) <= 0) {
-        alert('Invalid deposit amount. Please try again.')
+        setDepositError('Invalid deposit amount. Please try again.')
         return
       }
       try {
@@ -134,36 +161,79 @@ export function DepositButton() {
         refetchDeposits()
         window.dispatchEvent(new CustomEvent('depositCompleted'))
         window.dispatchEvent(new CustomEvent('balanceUpdated'))
-        alert(`🎉 Deposit successful!\n💰 Amount: ${amount} STT\n🔗 Transaction: ${txHash.slice(0, 10)}...`)
-        setIsModalOpen(false)
+        setSuccessMessage(`Deposit successful! Amount: ${amount} STT`)
+        setTimeout(() => {
+          setSuccessMessage('')
+          setIsModalOpen(false)
+        }, 3000)
       } catch (error) {
-        alert(`Deposit to smart contract succeeded, but failed to save to database: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        setErrorMessage(`Database error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        setTimeout(() => setErrorMessage(''), 5000)
       } finally {
         setIsProcessingDeposit(false)
       }
     },
     onError: (error) => {
-      alert(`Deposit failed: ${error.message}`)
+      setDepositError(error.message)
       setIsProcessingDeposit(false)
+      setTimeout(() => setDepositError(''), 5000)
     },
   })
 
   const handleDeposit = async () => {
     if (!depositAmount || parseFloat(depositAmount) <= 0) {
       setDepositError('Please enter a valid amount')
+      setTimeout(() => setDepositError(''), 3000)
       return
     }
     if (!address) {
-      alert('Please connect your wallet first')
+      setDepositError('Please connect your wallet first')
+      setTimeout(() => setDepositError(''), 3000)
       return
     }
-    if (balance && parseFloat(depositAmount) > walletBalance) {
-      setDepositError('You do not have enough monad')
+    if (parseFloat(depositAmount) > walletBalance) {
+      setDepositError('You do not have enough STT tokens')
+      setTimeout(() => setDepositError(''), 3000)
       return
     }
+    
+    // Check if approval is needed
+    if (amountNeedsApproval && amountNeedsApproval(depositAmount)) {
+      setDepositError('Please approve tokens first before depositing')
+      setTimeout(() => setDepositError(''), 3000)
+      return
+    }
+
     setDepositError('')
     depositAmountRef.current = depositAmount
-    await deposit(depositAmount)
+    try {
+      await deposit(depositAmount)
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('allowance')) {
+        setDepositError('Insufficient token allowance. Please approve tokens first.')
+        setTimeout(() => setDepositError(''), 3000)
+      }
+    }
+  }
+
+  const handleApprove = async () => {
+    if (!depositAmount || parseFloat(depositAmount) <= 0) {
+      setDepositError('Please enter a deposit amount first')
+      return
+    }
+    try {
+      await approve(depositAmount)
+    } catch (error) {
+      console.error('Approval error:', error)
+    }
+  }
+
+  const handleApproveMax = async () => {
+    try {
+      await approveMax()
+    } catch (error) {
+      console.error('Approval error:', error)
+    }
   }
 
   const handleWithdraw = async () => {
@@ -206,9 +276,11 @@ export function DepositButton() {
 
       window.dispatchEvent(new CustomEvent('balanceUpdated'))
 
-      alert(`✅ Withdrawal request submitted!\n💰 Amount: ${amount} STT\n📊 New Balance: ${result.newBalance} STT\n⏱️ Estimated processing: ${result.estimatedProcessingTime}\n\nYour balance has been deducted immediately.`)
-
-      setIsModalOpen(false)
+      setSuccessMessage(`Withdrawal request submitted! Amount: ${amount} STT. New Balance: ${result.newBalance} STT`)
+      setTimeout(() => {
+        setSuccessMessage('')
+        setIsModalOpen(false)
+      }, 3000)
     } catch (error) {
       console.error('Withdrawal failed:', error)
       setWithdrawError(error instanceof Error ? error.message : 'Failed to process withdrawal')
@@ -220,12 +292,12 @@ export function DepositButton() {
   const handleDepositAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newAmount = e.target.value
     setDepositAmount(newAmount)
-    if (newAmount && !isLoading && balance) {
+    if (newAmount && !isLoadingTokenBalance) {
       const amountNum = parseFloat(newAmount)
       if (isNaN(amountNum) || amountNum <= 0) {
         setDepositError('Amount must be greater than 0')
       } else if (amountNum > walletBalance) {
-        setDepositError('You do not have enough monad')
+        setDepositError('You do not have enough STT tokens')
       } else {
         setDepositError('')
       }
@@ -255,6 +327,7 @@ export function DepositButton() {
 
   const openModal = () => {
     if (!address) {
+      // Keep this alert as it's critical - user needs to connect wallet
       alert('Please connect your wallet first')
       return
     }
@@ -263,6 +336,8 @@ export function DepositButton() {
     setWithdrawAmount('')
     setDepositError('')
     setWithdrawError('')
+    setSuccessMessage('')
+    setErrorMessage('')
     setIsProcessingDeposit(false)
     setIsProcessingWithdraw(false)
     depositAmountRef.current = ''
@@ -275,6 +350,8 @@ export function DepositButton() {
     setWithdrawAmount('')
     setDepositError('')
     setWithdrawError('')
+    setSuccessMessage('')
+    setErrorMessage('')
     setIsProcessingDeposit(false)
     setIsProcessingWithdraw(false)
     depositAmountRef.current = ''
@@ -313,6 +390,18 @@ export function DepositButton() {
               </button>
             </div>
 
+            {/* Success/Error Messages */}
+            {successMessage && (
+              <div className="mb-4 p-3 bg-green-500/20 border border-green-400/30 rounded-lg text-green-100 text-sm">
+                ✅ {successMessage}
+              </div>
+            )}
+            {errorMessage && (
+              <div className="mb-4 p-3 bg-red-500/20 border border-red-400/30 rounded-lg text-red-100 text-sm">
+                ❌ {errorMessage}
+              </div>
+            )}
+
 
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)} className='w-full'>
               <TabsList className="grid grid-cols-2 bg-white/10 border border-white/20 text-white">
@@ -337,9 +426,9 @@ export function DepositButton() {
                     <p className="text-lg font-semibold text-white">{contractDeposits} STT</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs uppercase tracking-wide text-white/60 mb-1">Wallet Balance</p>
+                    <p className="text-xs uppercase tracking-wide text-white/60 mb-1">STT Token Balance</p>
                     <p className="text-lg font-mono text-white">
-                      {balance ? Number(formatEther(balance.value)).toFixed(4) : '0.0000'}
+                      {isLoadingTokenBalance ? 'Loading...' : walletBalance.toFixed(4)}
                     </p>
                   </div>
                 </div>
@@ -359,12 +448,50 @@ export function DepositButton() {
                     className={`w-full px-3 py-2.5 border rounded-lg bg-white/10 text-white placeholder-white/50 focus:outline-none focus:ring-2 ${
                       depositError ? 'border-red-500/50 focus:ring-red-500' : 'border-white/20 focus:ring-white/50'
                     }`}
-                    disabled={isDepositing || isProcessingDeposit || isLoading}
+                    disabled={isDepositing || isProcessingDeposit || isLoadingTokenBalance}
                   />
                   {depositError && (
                     <p className="mt-2 text-sm text-red-400">{depositError}</p>
                   )}
                 </div>
+
+                {/* Approval Status */}
+                {depositAmount && parseFloat(depositAmount) > 0 && (
+                  <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                    {isLoadingAllowance ? (
+                      <p className="text-sm text-white/60">Checking approval status...</p>
+                    ) : amountNeedsApproval && amountNeedsApproval(depositAmount) ? (
+                      <div className="space-y-2">
+                        <p className="text-sm text-yellow-400">
+                          ⚠️ Approval required: You need to approve {depositAmount} STT tokens before depositing
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleApprove}
+                            disabled={isApproving || isApprovingMax}
+                            className="flex-1 py-2 px-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                          >
+                            {isApproving ? 'Approving...' : `Approve ${depositAmount} STT`}
+                          </button>
+                          <button
+                            onClick={handleApproveMax}
+                            disabled={isApproving || isApprovingMax}
+                            className="flex-1 py-2 px-3 bg-yellow-700 text-white rounded-lg hover:bg-yellow-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                          >
+                            {isApprovingMax ? 'Approving...' : 'Approve Unlimited'}
+                          </button>
+                        </div>
+                        {(isApproveConfirmed || isApproveMaxConfirmed) && (
+                          <p className="text-sm text-green-400">✅ Approval confirmed! You can now deposit.</p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-green-400">
+                        ✅ You have sufficient approval ({allowance} STT approved)
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 <div className="flex gap-3">
                   <button
@@ -380,8 +507,10 @@ export function DepositButton() {
                       isProcessingDeposit ||
                       !depositAmount ||
                       !!depositError ||
-                      isLoading ||
-                      (depositAmount && parseFloat(depositAmount) > walletBalance)
+                      isLoadingTokenBalance ||
+                      isLoadingAllowance ||
+                      (depositAmount && parseFloat(depositAmount) > walletBalance) ||
+                      (amountNeedsApproval && depositAmount && amountNeedsApproval(depositAmount))
                     )}
                     className="flex-1 py-2.5 px-4 bg-white text-[#240B53] rounded-lg hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
                   >

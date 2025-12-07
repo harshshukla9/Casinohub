@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react'
-import { useDeposit, usePlayerDeposits, useVaultBalance, useDepositEvents } from './index'
+import { useDeposit, usePlayerDeposits, useVaultBalance, useDepositEvents, useTokenBalance, useTokenAllowance, useApproveToken, useApproveTokenMax } from './index'
 
 export function DepositComponent() {
   const [amount, setAmount] = useState('')
@@ -15,8 +15,29 @@ export function DepositComponent() {
   // Get vault balance
   const { balance, isLoading: isLoadingBalance } = useVaultBalance()
 
+  // Get ERC20 token balance
+  const { balance: tokenBalance, isLoading: isLoadingTokenBalance } = useTokenBalance()
+
+  // Check token allowance
+  const { allowance, isLoading: isLoadingAllowance, refetch: refetchAllowance } = useTokenAllowance()
+
+  // Approve token hooks
+  const { approve, isPending: isApproving, isConfirmed: isApproveConfirmed } = useApproveToken({
+    onSuccess: () => {
+      refetchAllowance()
+      console.log('Token approval successful!')
+    },
+  })
+
+  const { approveMax, isPending: isApprovingMax, isConfirmed: isApproveMaxConfirmed } = useApproveTokenMax({
+    onSuccess: () => {
+      refetchAllowance()
+      console.log('Unlimited token approval successful!')
+    },
+  })
+
   // Deposit function
-  const { deposit, isLoading: isDepositing, isConfirmed } = useDeposit({
+  const { deposit, isLoading: isDepositing, isConfirmed, needsApproval, amountNeedsApproval } = useDeposit({
     onSuccess: (txHash) => {
       console.log('Deposit successful:', txHash)
       setAmount('')
@@ -57,7 +78,40 @@ export function DepositComponent() {
       alert('Please enter a valid amount')
       return
     }
-    await deposit(amount)
+    
+    // Check if approval is needed
+    if (amountNeedsApproval && amountNeedsApproval(amount)) {
+      alert('Please approve tokens first before depositing')
+      return
+    }
+
+    try {
+      await deposit(amount)
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('allowance')) {
+        alert('Insufficient token allowance. Please approve tokens first.')
+      }
+    }
+  }
+
+  const handleApprove = async () => {
+    if (!amount || parseFloat(amount) <= 0) {
+      alert('Please enter a deposit amount first')
+      return
+    }
+    try {
+      await approve(amount)
+    } catch (error) {
+      console.error('Approval error:', error)
+    }
+  }
+
+  const handleApproveMax = async () => {
+    try {
+      await approveMax()
+    } catch (error) {
+      console.error('Approval error:', error)
+    }
   }
 
   return (
@@ -80,6 +134,14 @@ export function DepositComponent() {
         </p>
       </div>
 
+      {/* Token Balance */}
+      <div className="mb-4 p-3 bg-green-100 rounded">
+        <p className="text-sm text-gray-600">Your STT Token Balance</p>
+        <p className="text-lg font-semibold">
+          {isLoadingTokenBalance ? 'Loading...' : `${tokenBalance || '0'} STT`}
+        </p>
+      </div>
+
       {/* Deposit Form */}
       <div className="mb-4">
         <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
@@ -97,9 +159,52 @@ export function DepositComponent() {
         />
       </div>
 
+      {/* Approval Status */}
+      {amount && parseFloat(amount) > 0 && (
+        <div className="mb-4 p-3 bg-yellow-50 rounded border border-yellow-200">
+          {isLoadingAllowance ? (
+            <p className="text-sm text-gray-600">Checking approval status...</p>
+          ) : amountNeedsApproval && amountNeedsApproval(amount) ? (
+            <div className="space-y-2">
+              <p className="text-sm text-yellow-800">
+                ⚠️ Approval required: You need to approve {amount} STT tokens before depositing
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleApprove}
+                  disabled={isApproving || isApprovingMax}
+                  className="flex-1 py-2 px-3 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                >
+                  {isApproving ? 'Approving...' : `Approve ${amount} STT`}
+                </button>
+                <button
+                  onClick={handleApproveMax}
+                  disabled={isApproving || isApprovingMax}
+                  className="flex-1 py-2 px-3 bg-yellow-700 text-white rounded-md hover:bg-yellow-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                >
+                  {isApprovingMax ? 'Approving...' : 'Approve Unlimited'}
+                </button>
+              </div>
+              {(isApproveConfirmed || isApproveMaxConfirmed) && (
+                <p className="text-sm text-green-600">✅ Approval confirmed! You can now deposit.</p>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-green-600">
+              ✅ You have sufficient approval ({allowance} STT approved)
+            </p>
+          )}
+        </div>
+      )}
+
       <button
         onClick={handleDeposit}
-        disabled={isDepositing || !amount}
+        disabled={
+          isDepositing ||
+          !amount ||
+          isLoadingAllowance ||
+          Boolean(amountNeedsApproval && amount && amountNeedsApproval(amount))
+        }
         className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isDepositing ? 'Depositing...' : 'Deposit'}

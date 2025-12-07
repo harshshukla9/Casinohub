@@ -1,7 +1,8 @@
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
-import { parseEther } from 'viem'
-import { MonadVault } from '../lib/contract'
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi'
+import { parseUnits, type Address } from 'viem'
+import { MonadVault, STT_TOKEN_ADDRESS, ERC20_ABI } from '../lib/contract'
 import { useCallback, useEffect } from 'react'
+import { useTokenAllowance, useApproveToken } from './useERC20'
 
 export interface UseVaultOwnerOptions {
   onSuccess?: (txHash: string) => void
@@ -9,39 +10,65 @@ export interface UseVaultOwnerOptions {
 }
 
 /**
- * Hook for owner to fund the vault
+ * Hook for owner to fund the vault (ERC20 tokens)
+ * Note: Owner must approve tokens before funding
  * @param options - Configuration options
  * @returns Object with fundVault function and transaction state
  */
 export function useFundVault(options?: UseVaultOwnerOptions) {
+  const { address } = useAccount()
   const { writeContract, data: hash, error, isPending } = useWriteContract()
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
   })
 
+  // Get token decimals
+  const { data: decimals } = useReadContract({
+    address: STT_TOKEN_ADDRESS as Address,
+    abi: ERC20_ABI,
+    functionName: 'decimals',
+  })
+  const tokenDecimals = decimals ?? 18
+
+  // Check allowance
+  const { allowanceWei, refetch: refetchAllowance } = useTokenAllowance(
+    STT_TOKEN_ADDRESS as Address,
+    MonadVault.contractAddress as Address,
+    address
+  )
+
   const fundVault = useCallback(
     async (amount: string) => {
       try {
-        const amountInWei = parseEther(amount)
+        const amountInWei = parseUnits(amount, tokenDecimals)
+        const vaultAddress = MonadVault.contractAddress as Address
+
+        // Check if approval is needed
+        if (allowanceWei < amountInWei) {
+          throw new Error('Insufficient token allowance. Please approve tokens first.')
+        }
+
         await writeContract({
-          address: MonadVault.contractAddress as `0x${string}`,
+          address: vaultAddress,
           abi: MonadVault.abi,
           functionName: 'fundVault',
-          value: amountInWei,
+          args: [amountInWei],
         })
       } catch (err) {
         options?.onError?.(err as Error)
+        throw err
       }
     },
-    [writeContract, options]
+    [writeContract, options, allowanceWei, tokenDecimals]
   )
 
   // Handle success callback
   useEffect(() => {
     if (isConfirmed && hash) {
       options?.onSuccess?.(hash)
+      refetchAllowance()
     }
-  }, [isConfirmed, hash, options])
+  }, [isConfirmed, hash, options, refetchAllowance])
 
   return {
     fundVault,
@@ -51,6 +78,12 @@ export function useFundVault(options?: UseVaultOwnerOptions) {
     isConfirming,
     isConfirmed,
     isLoading: isPending || isConfirming,
+    needsApproval: allowanceWei === BigInt(0),
+    allowanceWei,
+    amountNeedsApproval: (amount: string) => {
+      const amountInWei = parseUnits(amount, tokenDecimals)
+      return allowanceWei < amountInWei
+    },
   }
 }
 
