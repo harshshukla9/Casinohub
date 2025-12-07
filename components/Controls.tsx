@@ -410,7 +410,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
   const totalProfit = betAmount * multiplier - betAmount;
 
   return (
-    <div className="py-2 px-2 flex  flex-col gap-4">
+    <div className="px-2 flex flex-col gap-4">
       <Tabs className="w-full bg-transparent">
   <TabsList className="w-full flex rounded-full overflow-hidden text-xl bg-[#110D14] p-2">
     <TabsTrigger value="manual" className="text-xl data-[state=active]:text-white p-2 text-white">Manual</TabsTrigger>
@@ -421,70 +421,65 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
   <TabsContents>
 
     {/* MANUAL */}
-    <TabsContent value="manual" className="flex flex-col gap-4">
+    <TabsContent value="manual" className="flex flex-col gap-4 h-full overflow-y-auto">
     <div className="">
         {isPlaying && (
-          <div className="bg-gradient-to-r from-green-900/30 via-emerald-900/20 to-green-900/30 flex rounded-t-lg px-4 py-3 items-center justify-between border border-green-500/40 shadow-lg shadow-green-500/10">
-            <div className="flex flex-col">
-              <div className="text-xs uppercase tracking-wider text-green-300/70 mb-1 font-medium">
-                Multiplier
-              </div>
-              <div className="text-3xl font-bold text-green-400 tracking-tight">
-                {multiplier.toFixed(2)}
-                <span className="text-xl">x</span>
+          <div className="bg-white/10 border border-white/20 rounded-lg px-4 py-3 flex items-center justify-between">
+            <div>
+              <div className="text-xs text-white/60 mb-1">Multiplier</div>
+              <div className="text-2xl font-semibold text-white">
+                {multiplier.toFixed(2)}x
               </div>
             </div>
-            <div className="flex flex-col items-end">
-              <div className="text-xs uppercase tracking-wider text-gray-400/70 mb-1 font-medium">
-                Available
-              </div>
-              <div className="text-xl font-semibold text-white">
-                {(betAmount * multiplier).toFixed(2)}{" "}
-                <span className="text-sm text-gray-300">STT</span>
+            <div className="text-right">
+              <div className="text-xs text-white/60 mb-1">Available</div>
+              <div className="text-lg font-semibold text-white">
+                {(betAmount * multiplier).toFixed(2)} STT
               </div>
             </div>
           </div>
         )}
-            {gameHash && (
-              <div className={`bg-blue-900/20 border border-blue-500/30 rounded-lg px-3 py-2 text-xs ${isPlaying ? 'mt-2' : 'mt-0'}`}>
-                <div className="text-blue-300 font-medium mb-1">🔒 Provable Fair Hash</div>
-                <div className="text-blue-200 font-mono break-all text-[10px]">
-                  {gameHash}
-                </div>
-                {serverSeedHash && (
-                  <div className="text-blue-200/70 font-mono break-all text-[9px] mt-1">
-                    Server Seed Hash: {serverSeedHash.slice(0, 16)}...
-                  </div>
-                )}
-                {status === 'playing' ? (
-                  <div className="text-gray-400 text-[10px] mt-1">
-                    ⏳ Verify link will be available after game ends
-                  </div>
-                ) : (
-                  <button
-                    onClick={async () => {
-                      if (!serverSeed && gameId) {
-                        const revealedSeed = await revealServerSeed();
-                        if (revealedSeed) {
-                          window.open(
-                            `/verify?hash=${gameHash}&serverSeed=${revealedSeed}&clientSeed=${clientSeed}&mines=${mineCount}&mode=${mode}&bet=${betAmount}`,
-                            '_blank'
-                          );
-                        }
-                      } else if (serverSeed) {
-                        window.open(
-                          `/verify?hash=${gameHash}&serverSeed=${serverSeed}&clientSeed=${clientSeed}&mines=${mineCount}&mode=${mode}&bet=${betAmount}`,
-                          '_blank'
-                        );
-                      }
-                    }}
-                    className="text-blue-400 hover:text-blue-300 underline mt-1 inline-block cursor-pointer bg-transparent border-none p-0"
-                  >
-                    ✅ Verify Game
-                  </button>
-                )}
+
+{gameHash && (
+          <div className={`bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 ${isPlaying ? 'mt-2' : ''}`}>
+            <div className="text-xs font-medium text-white mb-2">Provable Fair Hash</div>
+            <div className="text-[10px] font-mono text-white/80 break-all mb-2">
+              {gameHash}
+            </div>
+            {serverSeedHash && (
+              <div className="text-[10px] font-mono text-white/60 mb-2">
+                Server Seed: {serverSeedHash.slice(0, 16)}...
               </div>
             )}
+            {status === 'playing' ? (
+              <div className="text-[10px] text-white/50">
+                Verify link available after game ends
+              </div>
+            ) : (
+              <button
+                onClick={async () => {
+                  if (!serverSeed && gameId) {
+                    const revealedSeed = await revealServerSeed();
+                    if (revealedSeed) {
+                      window.open(
+                        `/verify?hash=${gameHash}&serverSeed=${revealedSeed}&clientSeed=${clientSeed}&mines=${mineCount}&mode=${mode}&bet=${betAmount}`,
+                        '_blank'
+                      );
+                    }
+                  } else if (serverSeed) {
+                    window.open(
+                      `/verify?hash=${gameHash}&serverSeed=${serverSeed}&clientSeed=${clientSeed}&mines=${mineCount}&mode=${mode}&bet=${betAmount}`,
+                      '_blank'
+                    );
+                  }
+                }}
+                className="text-sm w-fit bg-[#54B6A0]  text-white p-2 rounded-lg  hover:text-white underline cursor-pointer"
+              >
+                Verify Game
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="">
@@ -660,67 +655,61 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
     <TabsContent value="auto" className="flex flex-col gap-4">
     <div className="">
         {isPlaying && (
-          <div className="bg-gradient-to-r from-green-900/30 via-emerald-900/20 to-green-900/30 flex rounded-t-lg px-4 py-3 items-center justify-between border border-green-500/40 shadow-lg shadow-green-500/10">
-            <div className="flex flex-col">
-              <div className="text-xs uppercase tracking-wider text-green-300/70 mb-1 font-medium">
-                Multiplier
-              </div>
-              <div className="text-3xl font-bold text-green-400 tracking-tight">
-                {multiplier.toFixed(2)}
-                <span className="text-xl">x</span>
+          <div className="bg-white/10 border border-white/20 rounded-lg px-4 py-3 flex items-center justify-between">
+            <div>
+              <div className="text-xs text-white/60 mb-1">Multiplier</div>
+              <div className="text-2xl font-semibold text-white">
+                {multiplier.toFixed(2)}x
               </div>
             </div>
-            <div className="flex flex-col items-end">
-              <div className="text-xs uppercase tracking-wider text-gray-400/70 mb-1 font-medium">
-                Available
-              </div>
-              <div className="text-xl font-semibold text-white">
-                {(betAmount * multiplier).toFixed(2)}{" "}
-                <span className="text-sm text-gray-300">STT</span>
+            <div className="text-right">
+              <div className="text-xs text-white/60 mb-1">Available</div>
+              <div className="text-lg font-semibold text-white">
+                {(betAmount * multiplier).toFixed(2)} STT
               </div>
             </div>
           </div>
         )}
-            {gameHash && (
-              <div className={`bg-blue-900/20 border border-blue-500/30 rounded-lg px-3 py-2 text-xs ${isPlaying ? 'mt-2' : 'mt-0'}`}>
-                <div className="text-blue-300 font-medium mb-1">🔒 Provable Fair Hash</div>
-                <div className="text-blue-200 font-mono break-all text-[10px]">
-                  {gameHash}
-                </div>
-                {serverSeedHash && (
-                  <div className="text-blue-200/70 font-mono break-all text-[9px] mt-1">
-                    Server Seed Hash: {serverSeedHash.slice(0, 16)}...
-                  </div>
-                )}
-                {status === 'playing' ? (
-                  <div className="text-gray-400 text-[10px] mt-1">
-                    ⏳ Verify link will be available after game ends
-                  </div>
-                ) : (
-                  <button
-                    onClick={async () => {
-                      if (!serverSeed && gameId) {
-                        const revealedSeed = await revealServerSeed();
-                        if (revealedSeed) {
-                          window.open(
-                            `/verify?hash=${gameHash}&serverSeed=${revealedSeed}&clientSeed=${clientSeed}&mines=${mineCount}&mode=${mode}&bet=${betAmount}`,
-                            '_blank'
-                          );
-                        }
-                      } else if (serverSeed) {
-                        window.open(
-                          `/verify?hash=${gameHash}&serverSeed=${serverSeed}&clientSeed=${clientSeed}&mines=${mineCount}&mode=${mode}&bet=${betAmount}`,
-                          '_blank'
-                        );
-                      }
-                    }}
-                    className="text-blue-400 hover:text-blue-300 underline mt-1 inline-block cursor-pointer bg-transparent border-none p-0"
-                  >
-                    ✅ Verify Game
-                  </button>
-                )}
+        {gameHash && (
+          <div className={`bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 ${isPlaying ? 'mt-2' : ''}`}>
+            <div className="text-xs font-medium text-white mb-2">Provable Fair Hash</div>
+            <div className="text-[10px] font-mono text-white/80 break-all mb-2">
+              {gameHash}
+            </div>
+            {serverSeedHash && (
+              <div className="text-[10px] font-mono text-white/60 mb-2">
+                Server Seed: {serverSeedHash.slice(0, 16)}...
               </div>
             )}
+            {status === 'playing' ? (
+              <div className="text-[10px] text-white/50">
+                Verify link available after game ends
+              </div>
+            ) : (
+              <button
+                onClick={async () => {
+                  if (!serverSeed && gameId) {
+                    const revealedSeed = await revealServerSeed();
+                    if (revealedSeed) {
+                      window.open(
+                        `/verify?hash=${gameHash}&serverSeed=${revealedSeed}&clientSeed=${clientSeed}&mines=${mineCount}&mode=${mode}&bet=${betAmount}`,
+                        '_blank'
+                      );
+                    }
+                  } else if (serverSeed) {
+                    window.open(
+                      `/verify?hash=${gameHash}&serverSeed=${serverSeed}&clientSeed=${clientSeed}&mines=${mineCount}&mode=${mode}&bet=${betAmount}`,
+                      '_blank'
+                    );
+                  }
+                }}
+                className="text-sm w-fit bg-[#54B6A0]  text-white p-2 rounded-lg  hover:text-white underline cursor-pointer"
+              >
+                Verify Game
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="">
