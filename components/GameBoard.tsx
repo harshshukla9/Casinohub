@@ -341,10 +341,11 @@ export const GameBoard = () => {
 
                   const getTileBackground = () => {
                     if (tile === "hidden") {
-                      return "url('/all%20assets/withoutOpenTile.svg')";
+                      return "url('https://ox35safakaidjuzg.public.blob.vercel-storage.com/WithoutOpenTile.svg')";
                     }
-                    return "url('/all%20assets/withOpenTile.svg')";
+                    return "url('https://ox35safakaidjuzg.public.blob.vercel-storage.com/WithOpenTile.svg')";
                   };
+                  
 
                   const getTileContent = () => {
                     if (tile === "hidden") {
