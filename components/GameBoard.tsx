@@ -292,7 +292,7 @@ export const GameBoard = () => {
       <div
         className="h-full w-full z-10 object-cover lg:rounded-xl overflow-hidden"
         style={{
-          backgroundImage: "url(/all%20assets/TestBg.svg)",
+          backgroundImage: "url(/all%20assets/PrimaryBg.svg)",
           backgroundSize: "cover",
           backgroundPosition: "top",
           backgroundRepeat: "no-repeat",
