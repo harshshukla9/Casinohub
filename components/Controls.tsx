@@ -615,13 +615,17 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
 
       <div className="flex flex-col gap-2 md:mt-4">
         <motion.button
-          onClick={
-            canStart
-              ? handleStartGame
-              : canCashOut
-              ? handleCashOut
-              : handleStartGame
-          }
+          onClick={() => {
+            if (canCashOut) {
+              handleCashOut();
+            } else if (canReset) {
+              // Reset the game and allow new bet
+              resetGame();
+              setBetInputValue("");
+            } else if (canStart) {
+              handleStartGame();
+            }
+          }}
           disabled={!canStart && !canCashOut && !canReset}
           className={`w-full py-3 bg-[#945DF8] hover:bg-[#945DF8]/80 transition-all duration-150 text-white ${
             isPlaying ? "rounded-b-lg" : "rounded-lg"
@@ -632,12 +636,12 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
             ? "Insufficient Balance"
             : isBelowMinimum
             ? "Minimum 0.01 STT"
-            : canStart
-            ? "Bet"
             : canCashOut
             ? "Cashout"
             : canReset
             ? "Play Again"
+            : canStart
+            ? "Bet"
             : "Bet"}
         </motion.button>
 
@@ -871,15 +875,19 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
         )}
 
         <motion.button
-          onClick={
-            isAutoBetting
-              ? handleStopAutoBet
-              : canStart
-              ? handleStartAutoBet
-              : canCashOut
-              ? handleCashOut
-              : handleStartAutoBet
-          }
+          onClick={() => {
+            if (isAutoBetting) {
+              handleStopAutoBet();
+            } else if (canCashOut) {
+              handleCashOut();
+            } else if (canReset) {
+              // Reset the game and allow new bet
+              resetGame();
+              setBetInputValue("");
+            } else if (canStart) {
+              handleStartAutoBet();
+            }
+          }}
           disabled={!isAutoBetting && !canStart && !canCashOut && !canReset}
           className={`w-full py-3 mt-4 bg-[#945DF8] hover:bg-[#945DF8]/80 transition-all duration-150 text-white ${
             isPlaying ? "rounded-b-lg" : "rounded-lg"
@@ -892,12 +900,12 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
             ? "Insufficient Balance"
             : isBelowMinimum
             ? "Minimum 0.01 STT"
-            : canStart
-            ? "Start Autobet"
             : canCashOut
             ? "Cashout"
             : canReset
             ? "Play Again"
+            : canStart
+            ? "Start Autobet"
             : "Start Autobet"}
         </motion.button>
       </div>
