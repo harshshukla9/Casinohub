@@ -548,6 +548,32 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
         </div>
       </div>
 
+      {/* Mines Selector */}
+      <div className="">
+        <label className="block text-base font-medium text-gray-300">
+          Mines
+        </label>
+        <Select
+          value={mineCount.toString()}
+          onValueChange={(val) => {
+            const value = parseInt(val) || 1;
+            setMineCount(Math.min(Math.max(value, 1), 24));
+          }}
+          disabled={isPlaying}
+        >
+          <SelectTrigger className="w-full h-14 px-4 bg-[#1E2838] rounded-lg text-white text-lg border-gray-600 focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed">
+            <SelectValue placeholder="Select Mines" />
+          </SelectTrigger>
+          <SelectContent className="bg-[#1a1a1a] border border-gray-700 text-white max-h-[300px]">
+            {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
+              <SelectItem key={num} value={num.toString()} className="cursor-pointer">
+                {num} {num === 1 ? 'Mine' : 'Mines'}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Gems */}
       <div className="">
         <label className="block text-base font-medium text-gray-300">
