@@ -290,7 +290,7 @@ export const GameBoard = () => {
   const currentPayout = betAmount * multiplier;
 
   return (
-    <div className="relative h-[50vh]  md:h-full md:rounded-xl md:overflow-hidden md:w-full w-full overflow-hidden">
+    <div className="relative h-[50vh] md:h-[53vh] lg:h-full lg:rounded-xl overflow-hidden w-full">
       <div
         className="h-full w-full z-10 object-cover"
         style={{
@@ -382,19 +382,19 @@ export const GameBoard = () => {
           </motion.div>
         )}
 
-        <div className="flex flex-col absolute top-8 md:top-15 md:left-[65%] md:-translate-x-1/2 h-full md:w-full w-full px-4">
+        <div className="flex flex-col md:items-center lg:items-start absolute top-2 left-1/2 -translate-x-1/2 sm:top-4 md:top-4 lg:top-8 xl:top-15 lg:left-[65%] lg:-translate-x-1/2 h-full w-full lg:w-full px-2 sm:px-3 md:px-4 lg:px-4">
           <div 
-          className="relative md:w-[50vw] w-[92vw] z-10 p-8 md:p-12 lg:p-16 overflow-hidden md:h-[90vh] h-[43vh] flex flex-col items-center justify-center" 
+          className="relative w-[95vw] sm:w-[90vw] md:w-[60vw] lg:w-[50vw] z-10 p-3 sm:p-4 md:p-6 lg:p-7 xl:p-10 overflow-hidden h-[50vh] sm:h-[55vh] md:h-[40vh] lg:h-[82vh] xl:h-[85vh] flex flex-col items-center justify-center" 
           >
-
-        <div className="absolute inset-0 bg-[url('/all%20assets/MineFrame.svg')] bg-cover bg-no-repeat bg-center pointer-events-none" />
-
+        <div 
+          className="absolute inset-0 bg-[url('/all%20assets/MineFrame.svg')] bg-contain md:bg-contain lg:bg-contain xl:bg-cover bg-no-repeat bg-center pointer-events-none"
+        />
               <div
-                className={`grid grid-cols-5 gap-2 md:gap-3 lg:gap-4 h-full w-full z-20 p-1 items-center justify-center`}
+                className={`grid grid-cols-5 gap-1.5 sm:gap-2 md:gap-2 lg:gap-2.5 xl:gap-3 z-20 p-4 py-6 sm:p-5 md:p-6 lg:p-7 xl:p-9 h-full w-full items-center justify-center overflow-hidden`}
+                style={{ gridAutoRows: '1fr' }}
               >
                  {gridMines.map((row, rowIdx) =>
                    row.map((tile, colIdx) => {
-                    // All hidden tiles are clickable when playing (no row restriction)
                     const isClickable = status === "playing" && tile === "hidden";
 
                      const getTileBackground = () => {
@@ -409,66 +409,55 @@ export const GameBoard = () => {
                          return "";
                        } else if (tile === "safe") {
                          return (
-                           <motion.img
-                             key={`safe-${rowIdx}-${colIdx}`}
-                             src="/all%20assets/purpleMines.svg"
-                             alt="Safe"
-                             className=""
-                             initial={{ scale: 0, rotate: 180, opacity: 0 }}
-                             animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                             transition={{ duration: 0.4 }}
-                           />
+                           <Image 
+                           key={`safe-${rowIdx}-${colIdx}`}
+                               width={30} 
+                               height={30} 
+                               src="/all%20assets/purpleMines.svg"
+                               alt="Safe"
+                               className="w-[60%] h-[60%] md:w-[60%] md:h-[60%] lg:w-[70%] lg:h-[70%] object-contain" 
+                             />
                          );
                        } else if (tile === "trap") {
                          return (
-                           <motion.span
-                             key={`trap-${rowIdx}-${colIdx}`}
-                             className="text-4xl"
-                             initial={{ scale: 0, rotate: -45, opacity: 0 }}
-                             animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                             transition={{ duration: 0.4 }}
-                           >
-                             <Image width={35} height={35} src="/all%20assets/Dynamite.svg" alt="trap" className="w-full h-full object-contain" />
-                           </motion.span>
+                             <Image 
+                               width={35} 
+                               height={35} 
+                               src="/all%20assets/Dynamite.svg" 
+                               alt="trap" 
+                               className="w-[60%] h-[60%] md:w-[65%] md:h-[65%] lg:w-[70%] lg:h-[70%] object-contain" 
+                             />
                          );
                        }
                        return null;
                      };
 
-                     const getTileBackgroundColor = () => {
-                       if (isClickable) {
-                         if (mode === "easy") {
-                           return "#D4A05A";
-                         } else if (mode === "medium") {
-                           return "#8B4513";
-                         } else {
-                           return "#8B4513";
-                         }
-                       } else {
-                         return "#773016";
-                       }
-                     };
-
                      return (
                       <motion.div
                         key={`${rowIdx}-${colIdx}`}
-                        className={`h-[6vh] w-[12vw] rounded-lg flex items-center justify-center text-white text-2xl font-bold ${
+                        className={`aspect-square h-full w-full max-h-full max-w-full rounded-lg flex items-center justify-center text-white text-2xl font-bold overflow-hidden relative ${
                           isClickable
                             ? "cursor-pointer hover:brightness-110"
                             : "cursor-not-allowed"
                         }`}
                         style={{
                           backgroundColor:
-                            tile === "hidden" ? "transparent" : getTileBackgroundColor(),
+                          tile === "hidden" ? "transparent" : "",
                           backgroundImage: getTileBackground(),
                           backgroundSize: "cover",
                           backgroundPosition: "center",
-                          backgroundRepeat:"no-repeat"
+                          backgroundRepeat:"no-repeat",
+                          minHeight: 0,
+                          minWidth: 0,
+                          height: '100%',
+                          width: '100%'
                         }}
                          onClick={() => isClickable && clickTile(rowIdx, colIdx)}
                         whileTap={isClickable ? { scale: 0.95 } : {}}
                       >
-                         {getTileContent()}
+                         <div className="w-full h-full max-w-full max-h-full flex items-center justify-center p-1 absolute inset-0">
+                           {getTileContent()}
+                         </div>
                       </motion.div>
                     );
                   })
@@ -478,7 +467,6 @@ export const GameBoard = () => {
 
 
           </div>
-          {/* </div> */}
         </div>
       </div>
 
