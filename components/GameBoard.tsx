@@ -390,7 +390,7 @@ export const GameBoard = () => {
           className="absolute inset-0 bg-[url('/all%20assets/MineFrame.svg')] bg-contain md:bg-contain lg:bg-contain xl:bg-cover bg-no-repeat bg-center pointer-events-none"
         />
               <div
-                className={`grid grid-cols-5 gap-1.5 sm:gap-2 md:gap-2 lg:gap-2.5 xl:gap-3 z-20 p-4 sm:p-5 md:p-6 lg:p-7 xl:p-9 h-full w-full items-center justify-center overflow-hidden`}
+                className={`grid grid-cols-5 gap-1.5 sm:gap-2 md:gap-2 lg:gap-2.5 xl:gap-3 z-20 p-4 py-6 sm:p-5 md:p-6 lg:p-7 xl:p-9 h-full w-full items-center justify-center overflow-hidden`}
                 style={{ gridAutoRows: '1fr' }}
               >
                  {gridMines.map((row, rowIdx) =>
