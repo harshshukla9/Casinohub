@@ -161,12 +161,23 @@ const generateGrid = (mineCount: number): { grid: TileState[][], actualGrid: Til
 };
 
 // Calculate multiplier based on revealed tiles and mine count
-// Uses probability-based formula with house edge
-const calculateMultiplier = (revealedSafeTiles: number, mineCount: number, houseEdge = 0.05): number => {
+// Uses probability-based formula with dynamic house edge
+const calculateMultiplier = (revealedSafeTiles: number, mineCount: number): number => {
   if (revealedSafeTiles === 0) return 1;
   
   const TOTAL_TILES = 25;
   const gems = TOTAL_TILES - mineCount;
+  
+  // Validate inputs
+  if (mineCount < 1 || mineCount >= TOTAL_TILES) return 1;
+  if (revealedSafeTiles > gems) return 1;
+  
+  // Dynamic house edge based on mine count
+  // Lower mines = lower house edge (easier games have less edge)
+  // Higher mines = higher house edge (riskier games have more edge)
+  const baseHouseEdge = 0.01; // 1% minimum
+  const maxHouseEdge = 0.04; // 4% maximum
+  const houseEdge = baseHouseEdge + ((mineCount / TOTAL_TILES) * (maxHouseEdge - baseHouseEdge));
   
   // Calculate cumulative multiplier for all steps
   let totalMultiplier = 1;
@@ -175,6 +186,9 @@ const calculateMultiplier = (revealedSafeTiles: number, mineCount: number, house
     const opened = step - 1; // Tiles already opened before this step
     const remainingTiles = TOTAL_TILES - opened;
     const remainingGems = gems - opened;
+    
+    // Safety check
+    if (remainingTiles <= 0 || remainingGems <= 0) break;
     
     // Probability of hitting a safe tile (gem) at this step
     const pSafe = remainingGems / remainingTiles;
@@ -189,7 +203,8 @@ const calculateMultiplier = (revealedSafeTiles: number, mineCount: number, house
     totalMultiplier *= stepMult;
   }
   
-  return totalMultiplier;
+  // Ensure multiplier is always at least 1.0 (never lose money on successful reveals)
+  return Math.max(1.0, totalMultiplier);
 };
 
 // Initialize with default values
