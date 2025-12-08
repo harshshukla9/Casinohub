@@ -1,229 +1,68 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-
-const AUDIO_ASSETS = {
-  background: '/sounds/BGM.mp3',
-  cashout: '/sounds/Cashout.mp3',
-  diamond: '/sounds/Diamond%20Reveal.mp3',
-  death: '/sounds/Death.mp3',
-} as const;
-
-const LOCAL_STORAGE_KEY = 'treasure-tower-audio-settings';
-
-interface AudioSettings {
-  bgmVolume: number;
-  sfxVolume: number;
-}
-
-const DEFAULT_SETTINGS: AudioSettings = {
-  bgmVolume: 0.02,
-  sfxVolume: 0.7,
-};
-
-const safelyPlay = (audio?: HTMLAudioElement | null) => {
-  if (!audio) return;
-  const playPromise = audio.play();
-  if (playPromise) {
-    playPromise.catch(() => {});
-  }
-};
-
-const stopAndReset = (audio?: HTMLAudioElement | null) => {
-  if (!audio) return;
-  audio.pause();
-  audio.currentTime = 0;
-};
+import { useEffect, useState } from 'react';
+import audioManager from '@/lib/audioManager';
 
 export const AudioController = () => {
-  const backgroundRef = useRef<HTMLAudioElement | null>(null);
-  const cashoutRef = useRef<HTMLAudioElement | null>(null);
-  const diamondRef = useRef<HTMLAudioElement | null>(null);
-  const deathRef = useRef<HTMLAudioElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [isReady, setIsReady] = useState(false);
-  const [bgmVolume, setBgmVolume] = useState(DEFAULT_SETTINGS.bgmVolume);
-  const [sfxVolume, setSfxVolume] = useState(DEFAULT_SETTINGS.sfxVolume);
+  const [bgmVolume, setBgmVolume] = useState(audioManager?.bgmVolume ?? 0.5);
+  const [sfxVolume, setSfxVolume] = useState(audioManager?.sfxVolume ?? 0.7);
 
-  const clampVolume = (value: number) => Math.min(1, Math.max(0, value));
-
-  const persistSettings = useCallback((settings: AudioSettings) => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settings));
-  }, []);
-
-  const loadPersistedSettings = useCallback(() => {
-    if (typeof window === 'undefined') {
-      return DEFAULT_SETTINGS;
-    }
-    const stored = window.localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (!stored) {
-      return DEFAULT_SETTINGS;
-    }
-    try {
-      const parsed = JSON.parse(stored) as Partial<AudioSettings>;
-      return {
-        bgmVolume: parsed.bgmVolume !== undefined ? clampVolume(parsed.bgmVolume) : DEFAULT_SETTINGS.bgmVolume,
-        sfxVolume: parsed.sfxVolume !== undefined ? clampVolume(parsed.sfxVolume) : DEFAULT_SETTINGS.sfxVolume,
-      };
-    } catch (_error) {
-      return DEFAULT_SETTINGS;
-    }
-  }, []);
-
+  // Subscribe to audio manager updates
   useEffect(() => {
-    const settings = loadPersistedSettings();
-    setBgmVolume(settings.bgmVolume);
-    setSfxVolume(settings.sfxVolume);
-  }, [loadPersistedSettings]);
+    if (!audioManager) return;
 
-  useEffect(() => {
-    persistSettings({ bgmVolume, sfxVolume });
-  }, [bgmVolume, persistSettings, sfxVolume]);
+    // Sync initial values
+    setBgmVolume(audioManager.bgmVolume);
+    setSfxVolume(audioManager.sfxVolume);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    backgroundRef.current = new Audio(AUDIO_ASSETS.background);
-    backgroundRef.current.loop = true;
-    backgroundRef.current.preload = 'auto';
-
-    cashoutRef.current = new Audio(AUDIO_ASSETS.cashout);
-    cashoutRef.current.preload = 'auto';
-
-    diamondRef.current = new Audio(AUDIO_ASSETS.diamond);
-    diamondRef.current.preload = 'auto';
-
-    deathRef.current = new Audio(AUDIO_ASSETS.death);
-    deathRef.current.preload = 'auto';
-
-    setIsReady(true);
-
-    return () => {
-      stopAndReset(backgroundRef.current);
-      stopAndReset(cashoutRef.current);
-      stopAndReset(diamondRef.current);
-      stopAndReset(deathRef.current);
-      backgroundRef.current = null;
-      cashoutRef.current = null;
-      diamondRef.current = null;
-      deathRef.current = null;
-    };
-  }, []);
-
-  const applyVolumes = useCallback(() => {
-    if (!isReady) {
-      return;
-    }
-
-    if (backgroundRef.current) {
-      backgroundRef.current.volume = bgmVolume;
-      if (bgmVolume <= 0) {
-        backgroundRef.current.pause();
-      } else {
-        safelyPlay(backgroundRef.current);
+    // Subscribe to changes
+    const unsubscribe = audioManager.subscribe(() => {
+      if (audioManager) {
+        setBgmVolume(audioManager.bgmVolume);
+        setSfxVolume(audioManager.sfxVolume);
       }
-    }
-
-    const sfxAudios = [cashoutRef.current, diamondRef.current, deathRef.current];
-    sfxAudios.forEach((audio) => {
-      if (!audio) return;
-      audio.volume = sfxVolume;
     });
-  }, [bgmVolume, isReady, sfxVolume]);
-
-  useEffect(() => {
-    applyVolumes();
-  }, [applyVolumes]);
-
-  useEffect(() => {
-    if (!isReady || !backgroundRef.current) {
-      return;
-    }
-
-    if (bgmVolume > 0) {
-      safelyPlay(backgroundRef.current);
-    }
-
-    const handleInteraction = () => {
-      if (bgmVolume > 0) {
-        safelyPlay(backgroundRef.current);
-      }
-      window.removeEventListener('pointerdown', handleInteraction);
-      window.removeEventListener('keydown', handleInteraction);
-    };
-
-    window.addEventListener('pointerdown', handleInteraction);
-    window.addEventListener('keydown', handleInteraction);
 
     return () => {
-      window.removeEventListener('pointerdown', handleInteraction);
-      window.removeEventListener('keydown', handleInteraction);
+      unsubscribe();
     };
-  }, [bgmVolume, isReady]);
+  }, []);
 
-  const playSfx = useCallback(
-    (audioRef: React.MutableRefObject<HTMLAudioElement | null>) => {
-      if (sfxVolume <= 0) {
-        return;
-      }
-      const audio = audioRef.current;
-      if (!audio) {
-        return;
-      }
-      stopAndReset(audio);
-      audio.volume = sfxVolume;
-      safelyPlay(audio);
-    },
-    [sfxVolume],
-  );
-
-  useEffect(() => {
-    if (!isReady) {
-      return;
+  const handleBgmChange = (value: number) => {
+    if (audioManager) {
+      audioManager.bgmVolume = value;
+      audioManager.ensureInitialized();
     }
+  };
 
-    const handleSafeReveal = () => {
-      playSfx(diamondRef);
-    };
-
-    const handleTrapReveal = () => {
-      playSfx(deathRef);
-    };
-
-    const handleCashout = () => {
-      playSfx(cashoutRef);
-    };
-
-    window.addEventListener('game:safeReveal', handleSafeReveal);
-    window.addEventListener('game:trapReveal', handleTrapReveal);
-    window.addEventListener('game:cashout', handleCashout);
-
-    return () => {
-      window.removeEventListener('game:safeReveal', handleSafeReveal);
-      window.removeEventListener('game:trapReveal', handleTrapReveal);
-      window.removeEventListener('game:cashout', handleCashout);
-    };
-  }, [isReady, playSfx]);
-
+  const handleSfxChange = (value: number) => {
+    if (audioManager) {
+      audioManager.sfxVolume = value;
+      audioManager.ensureInitialized();
+    }
+  };
 
   const formatVolume = (value: number) => `${Math.round(value * 100)}%`;
 
   const toggleBgmMute = () => {
-    setBgmVolume((prev) => (prev <= 0 ? DEFAULT_SETTINGS.bgmVolume : 0));
+    if (audioManager) {
+      audioManager.bgmVolume = bgmVolume <= 0 ? 0.5 : 0;
+    }
   };
 
   const toggleSfxMute = () => {
-    setSfxVolume((prev) => (prev <= 0 ? DEFAULT_SETTINGS.sfxVolume : 0));
+    if (audioManager) {
+      audioManager.sfxVolume = sfxVolume <= 0 ? 0.7 : 0;
+    }
   };
 
-
   return (
-    <div className="w-full space-y-3" ref={containerRef}>
+    <div 
+      className="w-full space-y-3"
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+    >
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-sm text-white">Background Music</span>
@@ -235,14 +74,21 @@ export const AudioController = () => {
           max={100}
           step={5}
           value={Math.round(bgmVolume * 100)}
-          onChange={(event) => {
-            setBgmVolume(clampVolume(Number(event.target.value) / 100));
+          onChange={(e) => {
+            e.stopPropagation();
+            handleBgmChange(Number(e.target.value) / 100);
           }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
           className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
         />
         <button
           type="button"
-          onClick={toggleBgmMute}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleBgmMute();
+          }}
           className="w-full text-xs px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 transition-colors text-white border border-white/20"
         >
           {bgmVolume <= 0 ? 'Unmute BGM' : 'Mute BGM'}
@@ -260,14 +106,21 @@ export const AudioController = () => {
           max={100}
           step={5}
           value={Math.round(sfxVolume * 100)}
-          onChange={(event) => {
-            setSfxVolume(clampVolume(Number(event.target.value) / 100));
+          onChange={(e) => {
+            e.stopPropagation();
+            handleSfxChange(Number(e.target.value) / 100);
           }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
           className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
         />
         <button
           type="button"
-          onClick={toggleSfxMute}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleSfxMute();
+          }}
           className="w-full text-xs px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 transition-colors text-white border border-white/20"
         >
           {sfxVolume <= 0 ? 'Unmute SFX' : 'Mute SFX'}
