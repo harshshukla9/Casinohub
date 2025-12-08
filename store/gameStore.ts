@@ -161,15 +161,35 @@ const generateGrid = (mineCount: number): { grid: TileState[][], actualGrid: Til
 };
 
 // Calculate multiplier based on revealed tiles and mine count
-const calculateMultiplier = (revealedSafeTiles: number, totalSafeTiles: number, baseMultiplier: number): number => {
+// Uses probability-based formula with house edge
+const calculateMultiplier = (revealedSafeTiles: number, mineCount: number, houseEdge = 0.05): number => {
   if (revealedSafeTiles === 0) return 1;
   
-  // More revealed tiles = higher multiplier
-  // Formula: baseMultiplier ^ (revealedTiles / totalSafeTiles * multiplierBoost)
-  const progress = revealedSafeTiles / totalSafeTiles;
-  const multiplierBoost = 3; // Adjust this for reward scaling
+  const TOTAL_TILES = 25;
+  const gems = TOTAL_TILES - mineCount;
   
-  return Math.pow(baseMultiplier, revealedSafeTiles * multiplierBoost);
+  // Calculate cumulative multiplier for all steps
+  let totalMultiplier = 1;
+  
+  for (let step = 1; step <= revealedSafeTiles; step++) {
+    const opened = step - 1; // Tiles already opened before this step
+    const remainingTiles = TOTAL_TILES - opened;
+    const remainingGems = gems - opened;
+    
+    // Probability of hitting a safe tile (gem) at this step
+    const pSafe = remainingGems / remainingTiles;
+    
+    // Fair multiplier (no edge)
+    const fairStepMult = 1 / pSafe;
+    
+    // Apply house edge
+    const stepMult = fairStepMult * (1 - houseEdge);
+    
+    // Multiply into total
+    totalMultiplier *= stepMult;
+  }
+  
+  return totalMultiplier;
 };
 
 // Initialize with default values
@@ -381,7 +401,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     
     if (actualTile === 'safe') {
       const newRevealedCount = revealedSafeTiles + 1;
-      const newMultiplier = calculateMultiplier(newRevealedCount, totalSafeTiles, config.baseMultiplier);
+      const newMultiplier = calculateMultiplier(newRevealedCount, config.mineCount);
       
       // Check if all safe tiles are revealed
       if (newRevealedCount >= totalSafeTiles) {
