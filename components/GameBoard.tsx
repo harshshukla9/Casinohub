@@ -350,34 +350,42 @@ export const GameBoard = () => {
         }}
       />
 
+
       {status === "lost" && (
-        <>
-          <div className="absolute inset-0 z-30 bg-black/50 pointer-events-none" />
+        <div className="absolute inset-0 z-30 bg-black/50 pointer-events-none" />
+      )}
+      
+      {/* Dragon and win/lost images container - always positioned together */}
+      <div className="absolute bottom-0 right-2 z-50 flex flex-row-reverse items-start gap-0 md:gap-0">
+        {/* Win image - positioned to the left of dragon */}
+        {status === "won" && (
+          <Image
+            src={winStreak > 1 ? "/stone/winAgain.svg" : "/stone/firstWin.svg"}
+            alt="Win"
+            width={120}
+            height={120}
+            className="w-32 h-auto md:w-40 lg:w-56"
+          />
+        )}
+        {/* Dragon image */}
+        <Image
+          src="/LOGO/Dragon.svg"
+          alt="Dragon"
+          width={100}
+          height={100}
+          className="w-20 h-auto md:w-24 lg:w-[12vw]"
+        />
+        {/* Lost image - positioned to the right of dragon */}
+        {status === "lost" && (
           <Image
             src="/stone/TryAgain2.svg"
             alt="Stone"
             width={100}
             height={100}
-            className="absolute bottom-24 md:bottom-48 right-18 md:right-38 w-36 md:w-52 z-50"
+            className="w-32 h-auto md:w-40 lg:w-52"
           />
-        </>
-      )}
-      {status === "won" && (
-        <Image
-          src={winStreak > 1 ? "/stone/winAgain.svg" : "/stone/firstWin.svg"}
-          alt="Win"
-          width={120}
-          height={120}
-          className="absolute bottom-28 md:bottom-52 left-4 md:left-10 w-40 md:w-56 z-50"
-        />
-      )}
-      <Image
-            src="/LOGO/Dragon.svg"
-            alt="Dragon"
-            width={100}
-            height={100}
-            className="absolute bottom-0 right-2 w-22 md:w-[12vw] z-50"
-          />
+        )}
+      </div>
       
       {/* Game Over Modal */}
       {status === "lost" && (
