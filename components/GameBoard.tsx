@@ -497,10 +497,10 @@ export const GameBoard = () => {
         )}
 
         <div className="flex flex-col md:items-center lg:items-start absolute top-8 left-1/2 -translate-x-1/2 sm:top-4 md:top-4 lg:top-8 xl:top-12 lg:left-[65%] lg:-translate-x-1/2 h-full w-full lg:w-full px-2 sm:px-3 md:px-4 lg:px-4">
-          <div className="relative w-[95vw] sm:w-[90vw] md:w-[80vw] lg:w-[50vw] z-10 sm:p-2 md:p-6 lg:p-7 xl:px-16 xl:pb-16 xl:pt-14 overflow-hidden h-[55vh] sm:h-[55vh] md:h-[60vh] lg:h-[78vh] xl:h-[93vh] flex flex-col items-center justify-center">
+          <div className="relative w-[95vw] sm:w-[90vw] md:w-[80vw] lg:w-[50vw] z-10 sm:p-2 md:p-6 lg:p-7 xl:px-16 xl:pb-16 xl:pt-14 overflow-hidden h-[50vh] sm:h-[55vh] md:h-[60vh] lg:h-[78vh] xl:h-[93vh] flex flex-col items-center justify-center">
             <div className="absolute inset-0 bg-[url('/all%20assets/MineFrame.svg')] bg-contain md:bg-contain lg:bg-contain xl:bg-contain bg-no-repeat bg-center pointer-events-none" />
             <div
-              className={`grid grid-cols-5 p-8 md:py-2 md:gap-2 xl:gap-0 z-20 h-full w-full items-center justify-center overflow-hidden`}
+              className={`grid grid-cols-5 px-10 pb-16 pt-8 md:py-2 md:gap-2 xl:gap-0 z-20 h-full w-full items-center justify-center overflow-hidden`}
               style={{ gridAutoRows: "1fr" }}
             >
               {gridMines.map((row, rowIdx) =>
@@ -551,7 +551,7 @@ export const GameBoard = () => {
                   return (
                     <div
                       key={`${rowIdx}-${colIdx}`}
-                      className="aspect-square md:h-[9vh] lg:h-[14vh] h-[7vh] w-full max-h-full max-w-full relative"
+                      className="aspect-square md:h-[9vh] lg:h-[14vh] sm:h-[7vh] h-[8vh] w-full max-h-full max-w-full relative"
                     >
                       {/* Hidden tile with hover and click animation */}
                       {isHidden && (
