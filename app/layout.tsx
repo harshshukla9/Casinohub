@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     description: "Mine diamonds, avoid dynamite, and win STT tokens. The ultimate provable fair mines game built for crypto gamers and developers on Status Network.",
     images: [
       {
-        url: "https://ox35safakaidjuzg.public.blob.vercel-storage.com/OGG.png",
+        url: "https://ox35safakaidjuzg.public.blob.vercel-storage.com/og-image.png",
         width: 1200,
         height: 630, // WhatsApp recommended ratio is 1.91:1 (1200x630)
         alt: "Status Mines - Provable Fair Mines Game on Status Network",
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Status Mines - Provable Fair Mines Game on Status Network",
     description: "Mine diamonds, avoid dynamite, and win STT tokens. Built for crypto gamers and developers.",
-    images: ["https://ox35safakaidjuzg.public.blob.vercel-storage.com/OGG.png"],
+    images: ["https://ox35safakaidjuzg.public.blob.vercel-storage.com/og-image.png"],
   },
   robots: {
     index: true,
