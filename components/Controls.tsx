@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { useGameStore, type GameMode } from "../store/gameStore";
 import { useAccount } from "wagmi";
 import { useState, useEffect, useCallback } from "react";
@@ -424,6 +425,54 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
     {/* MANUAL */}
     <div className="flex flex-col gap-4 h-full overflow-y-auto">
     <div className="">
+
+    <div className="flex md:hidden flex-col gap-2 md:mt-4 mt-4">
+        {!isPlaying ? (
+          <motion.button
+            onClick={() => {
+              if (numericBetValue <= 0) {
+                toast.error("Please enter a bet amount");
+                return;
+              }
+              if (isBelowMinimum) {
+                toast.error("Minimum bet is 0.01 STT");
+                return;
+              }
+              if (hasInsufficientBalance) {
+                toast.error("Insufficient balance");
+                return;
+              }
+              if (canStart) {
+                handleStartGame();
+              }
+            }}
+            className="w-full py-3 bg-[#945DF8] hover:bg-[#945DF8]/80 transition-all duration-150 text-white rounded-lg font-semibold text-lg"
+            whileTap={{ scale: 0.98 }}
+        >
+          {hasInsufficientBalance
+            ? "Insufficient Balance"
+            : isBelowMinimum
+            ? "Minimum 0.01 STT"
+            : "Bet"}
+        </motion.button>
+        ) : (
+          <div className="flex gap-2">
+            <motion.button
+              onClick={handleCashOut}
+              className="flex-1 py-3 bg-[#945DF8] hover:bg-[#945DF8]/80 transition-all duration-150 text-white rounded-lg font-semibold text-lg"
+              whileTap={{ scale: 0.98 }}
+            >
+              Cash Out
+            </motion.button>
+        <button
+              onClick={pickRandomTile}
+              className="flex-1 py-3 bg-[#51545F] hover:bg-[#51545F]/80 transition-all duration-150 text-white rounded-lg font-semibold text-lg"
+        >
+          Random Pick
+        </button>
+      </div>
+        )}
+      </div>
         {isPlaying && (
           <div className="bg-white/10 border border-white/20 rounded-lg px-4 py-3 flex items-center justify-between">
             <div>
@@ -441,46 +490,46 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
           </div>
         )}
 
-{gameHash && (
-          <div className={`bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 ${isPlaying ? 'mt-2' : ''}`}>
+            {gameHash && (
+          <div className={`bg-white/10 border border-white/20 mt-4 md:mt-0 rounded-lg px-3 py-2.5 ${isPlaying ? 'mt-2' : ''}`}>
             <div className="text-xs font-medium text-white mb-2">Provable Fair Hash</div>
             <div className="text-[10px] font-mono text-white/80 break-all mb-2">
-              {gameHash}
-            </div>
-            {serverSeedHash && (
+                  {gameHash}
+                </div>
+                {serverSeedHash && (
               <div className="text-[10px] font-mono text-white/60 mb-2">
                 Server Seed: {serverSeedHash.slice(0, 16)}...
-              </div>
-            )}
-            {status === 'playing' ? (
+                  </div>
+                )}
+                {status === 'playing' ? (
               <div className="text-[10px] text-white/50">
                 Verify link available after game ends
-              </div>
-            ) : (
-              <button
-                onClick={async () => {
-                  if (!serverSeed && gameId) {
-                    const revealedSeed = await revealServerSeed();
-                    if (revealedSeed) {
-                      window.open(
-                        `/verify?hash=${gameHash}&serverSeed=${revealedSeed}&clientSeed=${clientSeed}&mines=${mineCount}&mode=${mode}&bet=${betAmount}`,
-                        '_blank'
-                      );
-                    }
-                  } else if (serverSeed) {
-                    window.open(
-                      `/verify?hash=${gameHash}&serverSeed=${serverSeed}&clientSeed=${clientSeed}&mines=${mineCount}&mode=${mode}&bet=${betAmount}`,
-                      '_blank'
-                    );
-                  }
-                }}
+                  </div>
+                ) : (
+                  <button
+                    onClick={async () => {
+                      if (!serverSeed && gameId) {
+                        const revealedSeed = await revealServerSeed();
+                        if (revealedSeed) {
+                          window.open(
+                            `/verify?hash=${gameHash}&serverSeed=${revealedSeed}&clientSeed=${clientSeed}&mines=${mineCount}&mode=${mode}&bet=${betAmount}`,
+                            '_blank'
+                          );
+                        }
+                      } else if (serverSeed) {
+                        window.open(
+                          `/verify?hash=${gameHash}&serverSeed=${serverSeed}&clientSeed=${clientSeed}&mines=${mineCount}&mode=${mode}&bet=${betAmount}`,
+                          '_blank'
+                        );
+                      }
+                    }}
                 className="text-sm w-fit bg-[#54B6A0]  text-white p-2 rounded-lg  hover:text-white underline cursor-pointer"
-              >
+                  >
                 Verify Game
-              </button>
+                  </button>
+                )}
+              </div>
             )}
-          </div>
-        )}
       </div>
 
       <div className="">
@@ -514,33 +563,33 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
         )}
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Input
-              placeholder="0.00"
-              type="number"
-              value={betInputValue}
-              disabled={isPlaying}
-              onChange={handleBetAmountChange}
-              step="0.01"
+          <Input
+            placeholder="0.00"
+            type="number"
+            value={betInputValue}
+            disabled={isPlaying}
+            onChange={handleBetAmountChange}
+            step="0.01"
               className="w-full text-lg focus:outline-none focus-visible:outline-none focus-visible:ring-0 px-4 py-6 h-14 border-gray-600 bg-black text-white rounded-lg pr-12"
-            />
+          />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-500 text-xl">
-              <Image src={"/token/sepolia.png"} alt="sepolia" width={50} height={20} className="w-8 h-8" />
+              <Image src={"/token/SttToken.png"} alt="sepolia" width={50} height={20} className="w-8 h-8" />
             </span>
           </div>
-          <button
-            onClick={handleBetHalf}
-            disabled={isPlaying}
+            <button
+              onClick={handleBetHalf}
+              disabled={isPlaying}
             className="px-6 h-14 bg-[#2A3441] hover:bg-gray-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-          >
+            >
             ½
-          </button>
-          <button
-            onClick={handleBetDouble}
-            disabled={isPlaying}
+            </button>
+            <button
+              onClick={handleBetDouble}
+              disabled={isPlaying}
             className="px-5 h-14 bg-[#2A3441] hover:bg-gray-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-          >
+            >
             2×
-          </button>
+            </button>
         </div>
       </div>
 
@@ -549,25 +598,25 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
         <label className="block text-base font-medium text-gray-300 mb-1">
           Mines
         </label>
-        <Select
-          value={mineCount.toString()}
-          onValueChange={(val) => {
-            const value = parseInt(val) || 1;
-            setMineCount(Math.min(Math.max(value, 1), 24));
-          }}
-          disabled={isPlaying}
-        >
+          <Select
+            value={mineCount.toString()}
+            onValueChange={(val) => {
+              const value = parseInt(val) || 1;
+              setMineCount(Math.min(Math.max(value, 1), 24));
+            }}
+            disabled={isPlaying}
+          >
           <SelectTrigger className="w-full h-14 px-4 bg-black rounded-lg text-white text-lg border-gray-600 focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed">
-            <SelectValue placeholder="Select Mines" />
-          </SelectTrigger>
-          <SelectContent className="bg-black border border-gray-700 text-white max-h-[300px]">
-            {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
-              <SelectItem key={num} value={num.toString()} className="cursor-pointer">
-                {num} {num === 1 ? 'Mine' : 'Mines'}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+              <SelectValue placeholder="Select Mines" />
+            </SelectTrigger>
+            <SelectContent className="bg-black border border-gray-700 text-white max-h-[300px]">
+              {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
+                <SelectItem key={num} value={num.toString()} className="cursor-pointer">
+                  {num} {num === 1 ? 'Mine' : 'Mines'}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
       </div>
 
       {/* Gems */}
@@ -583,9 +632,9 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
       {/* Total Profit */}
       <div className="">
         <div className="flex items-center justify-between mb-1">
-          <label className="block text-base font-medium text-gray-300">
+        <label className="block text-base font-medium text-gray-300">
             Total Profit ({multiplier.toFixed(2)}×)
-          </label>
+        </label>
           <span className="text-sm text-gray-400">
             ${(betAmount * multiplier - betAmount).toFixed(2)}
           </span>
@@ -595,50 +644,57 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
             {(betAmount * multiplier - betAmount).toFixed(8)}
           </div>
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-500 text-xl">
-          <Image src={"/token/sepolia.png"} alt="sepolia" width={50} height={20} className="w-8 h-8" />
+          <Image src={"/token/SttToken.png"} alt="sepolia" width={50} height={20} className="w-8 h-8" />
           </span>
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 md:mt-4">
-        <motion.button
-          onClick={() => {
-            if (canCashOut) {
-              handleCashOut();
-            } else if (canReset) {
-              // Reset the game and allow new bet
-              resetGame();
-              setBetInputValue("");
-            } else if (canStart) {
-              handleStartGame();
-            }
-          }}
-          disabled={!canStart && !canCashOut && !canReset}
-          className={`w-full py-3 bg-[#945DF8] hover:bg-[#945DF8]/80 transition-all duration-150 text-white ${
-            isPlaying ? "rounded-b-lg" : "rounded-lg"
-          } font-semibold text-lg`}
-          whileTap={canStart || canCashOut || canReset ? { scale: 0.98 } : {}}
+      <div className="md:flex hidden flex-col gap-2 md:mt-4">
+        {!isPlaying ? (
+<motion.button
+            onClick={() => {
+              if (numericBetValue <= 0) {
+                toast.error("Please enter a bet amount");
+                return;
+              }
+              if (isBelowMinimum) {
+                toast.error("Minimum bet is 0.01 STT");
+                return;
+              }
+              if (hasInsufficientBalance) {
+                toast.error("Insufficient balance");
+                return;
+              }
+              if (canStart) {
+                handleStartGame();
+              }
+            }}
+            className="w-full py-3 bg-[#945DF8] hover:bg-[#945DF8]/80 transition-all duration-150 text-white rounded-lg font-semibold text-lg"
+            whileTap={{ scale: 0.98 }}
         >
           {hasInsufficientBalance
             ? "Insufficient Balance"
             : isBelowMinimum
             ? "Minimum 0.01 STT"
-            : canCashOut
-            ? "Cashout"
-            : canReset
-            ? "Play Again"
-            : canStart
-            ? "Bet"
-            : "Bet"}
+              : "Bet"}
+          </motion.button>
+        ) : (
+          <div className="flex gap-2">
+            <motion.button
+              onClick={handleCashOut}
+              className="flex-1 py-3 bg-[#945DF8] hover:bg-[#945DF8]/80 transition-all duration-150 text-white rounded-lg font-semibold text-lg"
+              whileTap={{ scale: 0.98 }}
+            >
+              Cash Out
         </motion.button>
-
-        <button
-          className={`w-full py-3 bg-[#51545F] hover:bg-[#51545F]/80 transition-all duration-150 text-white ${
-            isPlaying ? "rounded-b-lg" : "rounded-lg"
-          } font-semibold text-lg`}
-        >
-          Random Pick
-        </button>
+            <button
+              onClick={pickRandomTile}
+              className="flex-1 py-3 bg-[#51545F] hover:bg-[#51545F]/80 transition-all duration-150 text-white rounded-lg font-semibold text-lg"
+            >
+              Random Pick
+            </button>
+          </div>
+        )}
       </div>
     </div>
     </div>

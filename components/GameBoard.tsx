@@ -179,6 +179,7 @@ export const GameBoard = () => {
   const [lastMultiplier, setLastMultiplier] = useState(1);
   const [showExplosion, setShowExplosion] = useState(false);
   const [explodedTile, setExplodedTile] = useState<{ row: number; col: number } | null>(null);
+  const [winStreak, setWinStreak] = useState(0);
 
   const gridMines = grid.slice(0, 6);
 
@@ -269,9 +270,10 @@ export const GameBoard = () => {
     };
   }, []);
 
-  // Show explosion and toast when status changes to lost
+  // Track wins / losses and trigger feedback
   useEffect(() => {
     if (status === 'lost') {
+      setWinStreak(0);
       setShowExplosion(true);
       setTimeout(() => {
         setShowExplosion(false);
@@ -309,6 +311,9 @@ export const GameBoard = () => {
           duration: 10000,
         }
       );
+    }
+    if (status === 'won') {
+      setWinStreak((prev) => prev + 1);
     }
   }, [status, betAmount]);
 
@@ -378,8 +383,34 @@ export const GameBoard = () => {
         }}
       />
 
-      <Image src="/LOGO/Dragon.svg" alt="Dragon" width={100} height={100} className="absolute bottom-0 right-2 w-22 md:w-[12vw] z-50" />
-
+      {status === "lost" && (
+        <>
+          <div className="absolute inset-0 z-30 bg-black/50 pointer-events-none" />
+          <Image
+            src="/stone/TryAgain2.svg"
+            alt="Stone"
+            width={100}
+            height={100}
+            className="absolute bottom-24 md:bottom-48 right-18 md:right-38 w-36 md:w-52 z-50"
+          />
+        </>
+      )}
+      {status === "won" && (
+        <Image
+          src={winStreak > 1 ? "/stone/winAgain.svg" : "/stone/firstWin.svg"}
+          alt="Win"
+          width={120}
+          height={120}
+          className="absolute bottom-28 md:bottom-52 left-4 md:left-10 w-40 md:w-56 z-50"
+        />
+      )}
+      <Image
+            src="/LOGO/Dragon.svg"
+            alt="Dragon"
+            width={100}
+            height={100}
+            className="absolute bottom-0 right-2 w-22 md:w-[12vw] z-50"
+          />
       <div className="h-full w-full z-10">
         <div className="absolute top-[-10px] left-1/3 transform -translate-x-1/2 z-30 flex justify-center items-center">
           <div className="relative">
