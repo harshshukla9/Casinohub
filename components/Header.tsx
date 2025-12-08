@@ -26,7 +26,7 @@ export const Header = () => {
     <header className="bg-[#1F2326] border-b border-white/10">
       <div className="w-full px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between gap-4 mb-3">
-          <Image src="/LOGO/LogooMines.svg" alt="Karma Mines" width={100} height={100} className="w-[20vw] md:w-[20vw] lg:w-[6vw] h-full" />
+          <Image src="/LOGO/LogooMines.svg" alt="Status Mines" width={100} height={100} className="w-[20vw] md:w-[20vw] lg:w-[6vw] h-full" />
           <div className="flex items-center gap-2">
             {/* Audio/Sound Icon - Separate Button */}
             <Popover open={isAudioPopoverOpen} onOpenChange={setIsAudioPopoverOpen}>
