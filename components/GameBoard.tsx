@@ -5,7 +5,6 @@ import { useGameStore, type TileState } from "../store/gameStore";
 import { useAccount } from "wagmi";
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { toast } from "sonner";
 
 interface TileProps {
   tile: TileState;
@@ -180,6 +179,7 @@ export const GameBoard = () => {
   const [showExplosion, setShowExplosion] = useState(false);
   const [explodedTile, setExplodedTile] = useState<{ row: number; col: number } | null>(null);
   const [winStreak, setWinStreak] = useState(0);
+  const [clickedTile, setClickedTile] = useState<{ row: number; col: number } | null>(null);
 
   const gridMines = grid.slice(0, 6);
 
@@ -278,39 +278,6 @@ export const GameBoard = () => {
       setTimeout(() => {
         setShowExplosion(false);
       }, 1000);
-
-      // Show toast with profit and play again button
-      const lossAmount = betAmount;
-      toast.custom(
-        (t) => (
-          <div 
-            className="flex flex-col gap-3 bg-black text-white p-4 rounded-lg border border-white/20 shadow-lg min-w-[300px]"
-            style={{ backgroundColor: "#000000", color: "#ffffff" }}
-          >
-            <div className="text-center">
-              <div className="text-lg font-bold text-white mb-1">Game Over!</div>
-              <div className="text-sm text-white/80">
-                You lost {lossAmount.toFixed(2)} STT
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                const { resetGame } = useGameStore.getState();
-                resetGame();
-                window.dispatchEvent(new CustomEvent("balanceUpdated"));
-                toast.dismiss(t);
-              }}
-              className="w-full bg-[#945DF8] hover:bg-[#945DF8]/80 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
-            >
-              Play Again
-            </button>
-          </div>
-        ),
-        {
-          position: "bottom-center",
-          duration: 10000,
-        }
-      );
     }
     if (status === 'won') {
       setWinStreak((prev) => prev + 1);
@@ -411,6 +378,87 @@ export const GameBoard = () => {
             height={100}
             className="absolute bottom-0 right-2 w-22 md:w-[12vw] z-50"
           />
+      
+      {/* Game Over Modal */}
+      {status === "lost" && (
+        <motion.div
+          className="absolute inset-0 z-50 flex items-center justify-center pointer-events-auto"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <motion.div
+            className="relative w-fit flex flex-col gap-4 bg-[#1F2326] text-white p-6 rounded-lg border border-white/20 shadow-lg z-50"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="text-center">
+              <div className="text-xl font-bold text-white mb-2">Game Over!</div>
+              <div className="text-sm text-white/80">
+                You lost {betAmount.toFixed(2)} STT
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Cashout Modal */}
+      {status === "cashed_out" && (
+        <motion.div
+          className="absolute inset-0 z-50 flex items-center justify-center pointer-events-auto"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="absolute inset-0 z-30 bg-black/50 pointer-events-none" />
+          <motion.div
+            className="relative w-fit flex flex-col gap-4 bg-[#1F2326] text-white p-6 rounded-lg border border-white/20 shadow-lg z-50"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            
+            <div className="text-center">
+              <div className="text-xl font-bold text-white mb-2">Cashed Out!</div>
+              <div className="text-sm text-white/80">
+                You won {(betAmount * multiplier).toFixed(2)} STT
+              </div>
+              <div className="text-xs text-white/60 mt-1">
+                Profit: +{(betAmount * (multiplier - 1)).toFixed(2)} STT
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Win Modal */}
+      {status === "won" && (
+        <motion.div
+          className="absolute inset-0 z-50 flex items-center justify-center pointer-events-auto"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="absolute inset-0 z-30 bg-black/50 pointer-events-none" />
+          <motion.div
+            className="relative w-fit flex flex-col gap-4 bg-[#1F2326] text-white p-6 rounded-lg border border-white/20 shadow-lg z-50"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="text-center">
+              <div className="text-xl font-bold text-white mb-2">You Won!</div>
+              <div className="text-sm text-white/80">
+                You won {(betAmount * multiplier).toFixed(2)} STT
+              </div>
+              <div className="text-xs text-white/60 mt-1">
+                Profit: +{(betAmount * (multiplier - 1)).toFixed(2)} STT
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
       <div className="h-full w-full z-10">
         <div className="absolute top-[-10px] left-1/3 transform -translate-x-1/2 z-30 flex justify-center items-center">
           <div className="relative">
@@ -488,51 +536,92 @@ export const GameBoard = () => {
                   };
 
                   const isExploded = explodedTile?.row === rowIdx && explodedTile?.col === colIdx;
+                  const isBeingClicked = clickedTile?.row === rowIdx && clickedTile?.col === colIdx;
+                  const isHidden = tile === "hidden";
+                  const isRevealed = tile === "safe" || tile === "trap";
 
                   return (
-                    <motion.div
+                    <div
                       key={`${rowIdx}-${colIdx}`}
-                      className={`aspect-square md:h-[9vh] lg:h-[14vh] h-[8vh] w-full max-h-full max-w-full rounded-lg flex items-center justify-center text-white text-2xl font-bold overflow-hidden relative ${
-                        isClickable ? "cursor-pointer " : "cursor-not-allowed"
-                      }`}
-                      style={{
-                        backgroundColor: tile === "hidden" ? "transparent" : "",
-                        backgroundImage: getTileBackground(),
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                        backgroundRepeat: "no-repeat",
-                      }}
-                      onClick={() => isClickable && clickTile(rowIdx, colIdx)}
-                      whileTap={isClickable ? { scale: 0.95 } : {}}
-                      animate={
-                        isExploded
-                          ? {
-                              scale: [1, 1.3, 1],
-                              backgroundColor: ["transparent", "rgba(255, 0, 0, 0.5)", "transparent"],
-                            }
-                          : {}
-                      }
-                      transition={
-                        isExploded
-                          ? {
-                              duration: 0.6,
-                              ease: "easeOut",
-                            }
-                          : {}
-                      }
+                      className="aspect-square md:h-[9vh] lg:h-[14vh] h-[8vh] w-full max-h-full max-w-full relative"
                     >
-                      {isExploded && (
+                      {/* Hidden tile with hover and click animation */}
+                      {isHidden && (
                         <motion.div
-                          className="absolute inset-0 bg-red-500/50 rounded-lg"
-                          initial={{ opacity: 0, scale: 0 }}
-                          animate={{ opacity: [0, 1, 0], scale: [0, 2, 0] }}
-                          transition={{ duration: 0.6 }}
+                          className={`absolute inset-0 rounded-lg overflow-hidden ${
+                            isClickable ? "cursor-pointer" : "cursor-not-allowed"
+                          }`}
+                          style={{
+                            backgroundImage: getTileBackground(),
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                            backgroundRepeat: "no-repeat",
+                          }}
+                          animate={
+                            isBeingClicked
+                              ? {
+                                  scale: [1, 1.15, 0],
+                                }
+                              : {}
+                          }
+                          transition={
+                            isBeingClicked
+                              ? {
+                                  duration: 0.45,
+                                  ease: [0.25, 0.46, 0.45, 0.94], // Smooth ease-out for visible scale down
+                                  times: [0, 0.2, 1], // Quick pop up (20%), then visible scale down (80%)
+                                }
+                              : {}
+                          }
+                          whileHover={
+                            isClickable
+                              ? {
+                                  scale: 1.01,
+                                  transition: { duration: 0.2 },
+                                }
+                              : undefined
+                          }
+                          onClick={() => {
+                            if (isClickable) {
+                              setClickedTile({ row: rowIdx, col: colIdx });
+                              // Wait for scale animation to complete before revealing
+                              setTimeout(() => {
+                                clickTile(rowIdx, colIdx);
+                                setTimeout(() => {
+                                  setClickedTile(null);
+                                }, 50);
+                              }, 450);
+                            }
+                          }}
                         />
                       )}
-                      <div className="w-full h-full max-w-full max-h-full flex items-center justify-center p-1 absolute inset-0">
-                        {getTileContent()}
-                      </div>
-                    </motion.div>
+
+                      {/* Revealed tile - no animation */}
+                      {isRevealed && (
+                        <div
+                          className="absolute inset-0 rounded-lg overflow-hidden"
+                          style={{
+                            backgroundImage: getTileBackground(),
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                            backgroundRepeat: "no-repeat",
+                          }}
+                        >
+                          {/* Explosion effect for trap tiles */}
+                          {isExploded && (
+                            <motion.div
+                              className="absolute inset-0 bg-red-500/50 rounded-lg"
+                              initial={{ opacity: 0, scale: 0 }}
+                              animate={{ opacity: [0, 1, 0], scale: [0, 2, 0] }}
+                              transition={{ duration: 0.6 }}
+                            />
+                          )}
+                          <div className="w-full h-full max-w-full max-h-full flex items-center justify-center p-1 absolute inset-0">
+                            {getTileContent()}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   );
                 })
               )}

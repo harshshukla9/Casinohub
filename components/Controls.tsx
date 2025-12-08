@@ -13,7 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { Tabs, TabsContent, TabsContents, TabsList, TabsTrigger } from "./animate-ui/components/animate/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsContents,
+  TabsList,
+  TabsTrigger,
+} from "./animate-ui/components/animate/tabs";
 import Image from "next/image";
 
 interface ControlsProps {
@@ -32,7 +38,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [betInputValue, setBetInputValue] = useState<string>("");
   const [autoBetCount, setAutoBetCount] = useState<string>("5");
-  
+
   // Auto-bet state
   const [isAutoBetting, setIsAutoBetting] = useState(false);
   const [autoBetRemaining, setAutoBetRemaining] = useState(0);
@@ -282,13 +288,13 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
 
   // Random tile picker for auto-bet
   const pickRandomTile = useCallback(() => {
-    if (status !== 'playing') return;
-    
+    if (status !== "playing") return;
+
     // Find all hidden tiles
     const hiddenTiles: { row: number; col: number }[] = [];
     grid.forEach((row, rowIndex) => {
       row.forEach((tile, colIndex) => {
-        if (tile === 'hidden') {
+        if (tile === "hidden") {
           hiddenTiles.push({ row: rowIndex, col: colIndex });
         }
       });
@@ -299,14 +305,20 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
     // Pick a random hidden tile
     const randomIndex = Math.floor(Math.random() * hiddenTiles.length);
     const { row, col } = hiddenTiles[randomIndex];
-    
+
     clickTile(row, col);
   }, [status, grid, clickTile]);
 
   // Auto-bet logic - Start new game when needed
   useEffect(() => {
     if (!isAutoBetting) return;
-    if (status !== 'idle' && status !== 'won' && status !== 'lost' && status !== 'cashed_out') return;
+    if (
+      status !== "idle" &&
+      status !== "won" &&
+      status !== "lost" &&
+      status !== "cashed_out"
+    )
+      return;
     if (autoBetRemaining <= 0) {
       setIsAutoBetting(false);
       fetchUserBalance();
@@ -337,19 +349,25 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
         }
 
         const result = await response.json();
-        
-        setUserBalance((prev) => prev ? {
-          ...prev,
-          balance: result.newBalance,
-        } : null);
+
+        setUserBalance((prev) =>
+          prev
+            ? {
+                ...prev,
+                balance: result.newBalance,
+              }
+            : null
+        );
 
         await startGame();
-        setAutoBetRemaining(prev => prev - 1);
+        setAutoBetRemaining((prev) => prev - 1);
       } catch (error) {
         console.error("Auto-bet failed:", error);
         setIsAutoBetting(false);
         setAutoBetRemaining(0);
-        setAutoBetError(error instanceof Error ? error.message : "Auto-bet failed");
+        setAutoBetError(
+          error instanceof Error ? error.message : "Auto-bet failed"
+        );
         setTimeout(() => setAutoBetError(""), 5000);
       }
     };
@@ -360,7 +378,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
 
   // Auto-bet logic - Pick random tiles during gameplay
   useEffect(() => {
-    if (!isAutoBetting || status !== 'playing') return;
+    if (!isAutoBetting || status !== "playing") return;
 
     const revealInterval = setInterval(() => {
       pickRandomTile();
@@ -375,30 +393,34 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
     const totalRequired = numericBetValue * count;
 
     if (!address) {
-      setAutoBetError('Please connect your wallet first');
+      setAutoBetError("Please connect your wallet first");
       setTimeout(() => setAutoBetError(""), 3000);
       return;
     }
 
     if (count <= 0) {
-      setAutoBetError('Please enter a valid number of bets');
+      setAutoBetError("Please enter a valid number of bets");
       setTimeout(() => setAutoBetError(""), 3000);
       return;
     }
 
     if (numericBetValue < 0.01) {
-      setAutoBetError('Minimum bet amount is 0.01 STT');
+      setAutoBetError("Minimum bet amount is 0.01 STT");
       setTimeout(() => setAutoBetError(""), 3000);
       return;
     }
 
     if (userBalance && totalRequired > userBalance.balance) {
-      setAutoBetError(`Insufficient balance. Need ${totalRequired.toFixed(2)} STT for ${count} bets`);
+      setAutoBetError(
+        `Insufficient balance. Need ${totalRequired.toFixed(
+          2
+        )} STT for ${count} bets`
+      );
       setTimeout(() => setAutoBetError(""), 5000);
       return;
     }
 
-    setAutoBetError('');
+    setAutoBetError("");
     setIsAutoBetting(true);
     setAutoBetRemaining(count);
   };
@@ -419,185 +441,195 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
     <TabsTrigger value="auto" className="text-xl p-2 data-[state=active]:text-white text-white">Auto</TabsTrigger>
   </TabsList> */}
 
+      {/* <TabsContents> */}
 
-  {/* <TabsContents> */}
-
-    {/* MANUAL */}
-    <div className="flex flex-col gap-4 h-full overflow-y-auto">
-    <div className="">
-
-    <div className="flex md:hidden flex-col gap-2 md:mt-4 mt-4">
-        {!isPlaying ? (
-          <motion.button
-            onClick={() => {
-              if (numericBetValue <= 0) {
-                toast.error("Please enter a bet amount");
-                return;
-              }
-              if (isBelowMinimum) {
-                toast.error("Minimum bet is 0.01 STT");
-                return;
-              }
-              if (hasInsufficientBalance) {
-                toast.error("Insufficient balance");
-                return;
-              }
-              if (canStart) {
-                handleStartGame();
-              }
-            }}
-            className="w-full py-3 bg-[#945DF8] hover:bg-[#945DF8]/80 transition-all duration-150 text-white rounded-lg font-semibold text-lg"
-            whileTap={{ scale: 0.98 }}
-        >
-          {hasInsufficientBalance
-            ? "Insufficient Balance"
-            : isBelowMinimum
-            ? "Minimum 0.01 STT"
-            : "Bet"}
-        </motion.button>
-        ) : (
-          <div className="flex gap-2">
-            <motion.button
-              onClick={handleCashOut}
-              className="flex-1 py-3 bg-[#945DF8] hover:bg-[#945DF8]/80 transition-all duration-150 text-white rounded-lg font-semibold text-lg"
-              whileTap={{ scale: 0.98 }}
-            >
-              Cash Out
-            </motion.button>
-        <button
-              onClick={pickRandomTile}
-              className="flex-1 py-3 bg-[#51545F] hover:bg-[#51545F]/80 transition-all duration-150 text-white rounded-lg font-semibold text-lg"
-        >
-          Random Pick
-        </button>
-      </div>
-        )}
-      </div>
-        {isPlaying && (
-          <div className="bg-white/10 border border-white/20 rounded-lg px-4 py-3 flex items-center justify-between">
-            <div>
-              <div className="text-xs text-white/60 mb-1">Multiplier</div>
-              <div className="text-2xl font-semibold text-white">
-                {multiplier.toFixed(2)}x
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-xs text-white/60 mb-1">Available</div>
-              <div className="text-lg font-semibold text-white">
-                {(betAmount * multiplier).toFixed(2)} STT
-              </div>
-            </div>
-          </div>
-        )}
-
-            {gameHash && (
-          <div className={`bg-white/10 border border-white/20 mt-4 md:mt-0 rounded-lg px-3 py-2.5 ${isPlaying ? 'mt-2' : ''}`}>
-            <div className="text-xs font-medium text-white mb-2">Provable Fair Hash</div>
-            <div className="text-[10px] font-mono text-white/80 break-all mb-2">
-                  {gameHash}
-                </div>
-                {serverSeedHash && (
-              <div className="text-[10px] font-mono text-white/60 mb-2">
-                Server Seed: {serverSeedHash.slice(0, 16)}...
-                  </div>
-                )}
-                {status === 'playing' ? (
-              <div className="text-[10px] text-white/50">
-                Verify link available after game ends
-                  </div>
-                ) : (
-                  <button
-                    onClick={async () => {
-                      if (!serverSeed && gameId) {
-                        const revealedSeed = await revealServerSeed();
-                        if (revealedSeed) {
-                          window.open(
-                            `/verify?hash=${gameHash}&serverSeed=${revealedSeed}&clientSeed=${clientSeed}&mines=${mineCount}&mode=${mode}&bet=${betAmount}`,
-                            '_blank'
-                          );
-                        }
-                      } else if (serverSeed) {
-                        window.open(
-                          `/verify?hash=${gameHash}&serverSeed=${serverSeed}&clientSeed=${clientSeed}&mines=${mineCount}&mode=${mode}&bet=${betAmount}`,
-                          '_blank'
-                        );
-                      }
-                    }}
-                className="text-sm w-fit bg-[#54B6A0]  text-white p-2 rounded-lg  hover:text-white underline cursor-pointer"
-                  >
-                Verify Game
-                  </button>
-                )}
+      {/* MANUAL */}
+      <div className="flex flex-col gap-4 h-full overflow-y-auto">
+        <div className="">
+          <div className="flex md:hidden flex-col gap-2 md:mt-4 mt-4">
+            {!isPlaying ? (
+              <motion.button
+                onClick={() => {
+                  if (numericBetValue <= 0) {
+                    toast.error("Please enter a bet amount");
+                    return;
+                  }
+                  if (isBelowMinimum) {
+                    toast.error("Minimum bet is 0.01 STT");
+                    return;
+                  }
+                  if (hasInsufficientBalance) {
+                    toast.error("Insufficient balance");
+                    return;
+                  }
+                  if (canStart) {
+                    handleStartGame();
+                  }
+                }}
+                className="w-full py-3 bg-[#945DF8] hover:bg-[#945DF8]/80 transition-all duration-150 text-white rounded-lg font-semibold text-lg"
+                whileTap={{ scale: 0.98 }}
+              >
+                {hasInsufficientBalance
+                  ? "Insufficient Balance"
+                  : isBelowMinimum
+                  ? "Minimum 0.01 STT"
+                  : "Bet"}
+              </motion.button>
+            ) : (
+              <div className="flex gap-2">
+                <motion.button
+                  onClick={handleCashOut}
+                  className="flex-1 py-3 bg-[#945DF8] hover:bg-[#945DF8]/80 transition-all duration-150 text-white rounded-lg font-semibold text-lg"
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Cash Out
+                </motion.button>
+                <button
+                  onClick={pickRandomTile}
+                  className="flex-1 py-3 bg-[#51545F] hover:bg-[#51545F]/80 transition-all duration-150 text-white rounded-lg font-semibold text-lg"
+                >
+                  Random Pick
+                </button>
               </div>
             )}
-      </div>
-
-      <div className="">
-        <div className="flex justify-between items-center">
-          <label className="text-base font-medium text-gray-300 mb-1">
-            Bet Amount
-          </label>
-        </div>
-        {hasInsufficientBalance && (
-          <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-                <div className="text-sm text-red-300">
-                <div className="font-medium">Insufficient Balance</div>
-                <div className="text-xs">
-                  You need {numericBetValue.toFixed(2)} STT but only have{" "}
-                  {userBalance?.balance.toFixed(2)} STT
+          </div>
+          {isPlaying && (
+            <div className="bg-white/10 mt-4 md:mt-2 border border-white/20 rounded-lg px-4 py-3 flex items-center justify-between">
+              <div>
+                <div className="text-xs text-white/60 mb-1">Multiplier</div>
+                <div className="text-2xl font-semibold text-white">
+                  {multiplier.toFixed(2)}x
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-white/60 mb-1">Available</div>
+                <div className="text-lg font-semibold text-white">
+                  {(betAmount * multiplier).toFixed(2)} STT
                 </div>
               </div>
             </div>
+          )}
+
+          {gameHash && (
+            <div
+              className={`bg-white/10 border md:mt-4 border-white/20 mt-4 md:mt-0 rounded-lg px-3 py-2.5 ${
+                isPlaying ? "mt-2" : ""
+              }`}
+            >
+              <div className="text-xs font-medium text-white mb-2">
+                Provable Fair Hash
+              </div>
+              <div className="text-[10px]  font-mono text-white/80 break-all mb-2">
+                {gameHash}
+              </div>
+              {serverSeedHash && (
+                <div className="text-[10px] font-mono text-white/60 mb-2">
+                  Server Seed: {serverSeedHash.slice(0, 16)}...
+                </div>
+              )}
+              {status === "playing" ? (
+                <div className="text-[10px] text-white/50">
+                  Verify link available after game ends
+                </div>
+              ) : (
+                <button
+                  onClick={async () => {
+                    if (!serverSeed && gameId) {
+                      const revealedSeed = await revealServerSeed();
+                      if (revealedSeed) {
+                        window.open(
+                          `/verify?hash=${gameHash}&serverSeed=${revealedSeed}&clientSeed=${clientSeed}&mines=${mineCount}&mode=${mode}&bet=${betAmount}`,
+                          "_blank"
+                        );
+                      }
+                    } else if (serverSeed) {
+                      window.open(
+                        `/verify?hash=${gameHash}&serverSeed=${serverSeed}&clientSeed=${clientSeed}&mines=${mineCount}&mode=${mode}&bet=${betAmount}`,
+                        "_blank"
+                      );
+                    }
+                  }}
+                  className="text-sm w-fit bg-[#54B6A0]  text-white p-2 rounded-lg  hover:text-white underline cursor-pointer"
+                >
+                  Verify Game
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="">
+          <div className="flex justify-between items-center">
+            <label className="text-base font-medium text-gray-300 mb-1">
+              Bet Amount
+            </label>
           </div>
-        )}
-        {isBelowMinimum && (
-          <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <div className="text-sm text-yellow-300">
-                <div className="font-medium">Minimum Bet Required</div>
-                <div className="text-xs">Minimum bet amount is 0.01 STT</div>
+          {hasInsufficientBalance && (
+            <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <div className="text-sm text-red-300">
+                  <div className="font-medium">Insufficient Balance</div>
+                  <div className="text-xs">
+                    You need {numericBetValue.toFixed(2)} STT but only have{" "}
+                    {userBalance?.balance.toFixed(2)} STT
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-          <Input
-            placeholder="0.00"
-            type="number"
-            value={betInputValue}
-            disabled={isPlaying}
-            onChange={handleBetAmountChange}
-            step="0.01"
-              className="w-full text-lg focus:outline-none focus-visible:outline-none focus-visible:ring-0 px-4 py-6 h-14 border-gray-600 bg-black text-white rounded-lg pr-12"
-          />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-500 text-xl">
-              <Image src={"/token/SttToken.png"} alt="sepolia" width={50} height={20} className="w-8 h-8" />
-            </span>
-          </div>
+          )}
+          {isBelowMinimum && (
+            <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <div className="text-sm text-yellow-300">
+                  <div className="font-medium">Minimum Bet Required</div>
+                  <div className="text-xs">Minimum bet amount is 0.01 STT</div>
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Input
+                placeholder="0.00"
+                type="number"
+                value={betInputValue}
+                disabled={isPlaying}
+                onChange={handleBetAmountChange}
+                step="0.01"
+                className="w-full text-lg focus:outline-none focus-visible:outline-none focus-visible:ring-0 px-4 py-6 h-14 border-gray-600 bg-black text-white rounded-lg pr-12"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-500 text-xl">
+                <Image
+                  src={"/token/SttToken.png"}
+                  alt="sepolia"
+                  width={50}
+                  height={20}
+                  className="w-8 h-8"
+                />
+              </span>
+            </div>
             <button
               onClick={handleBetHalf}
               disabled={isPlaying}
-            className="px-6 h-14 bg-[#2A3441] hover:bg-gray-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              className="px-6 h-14 bg-[#2A3441] hover:bg-gray-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
-            ½
+              ½
             </button>
             <button
               onClick={handleBetDouble}
               disabled={isPlaying}
-            className="px-5 h-14 bg-[#2A3441] hover:bg-gray-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              className="px-5 h-14 bg-[#2A3441] hover:bg-gray-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
-            2×
+              2×
             </button>
+          </div>
         </div>
-      </div>
 
-      {/* Mines Selector */}
-      <div className="">
-        <label className="block text-base font-medium text-gray-300 mb-1">
-          Mines
-        </label>
+        {/* Mines Selector */}
+        <div className="">
+          <label className="block text-base font-medium text-gray-300 mb-1">
+            Mines
+          </label>
           <Select
             value={mineCount.toString()}
             onValueChange={(val) => {
@@ -606,97 +638,107 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
             }}
             disabled={isPlaying}
           >
-          <SelectTrigger className="w-full h-14 px-4 bg-black rounded-lg text-white text-lg border-gray-600 focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed">
+            <SelectTrigger className="w-full h-14 px-4 bg-black rounded-lg text-white text-lg border-gray-600 focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed">
               <SelectValue placeholder="Select Mines" />
             </SelectTrigger>
             <SelectContent className="bg-black border border-gray-700 text-white max-h-[300px]">
               {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
-                <SelectItem key={num} value={num.toString()} className="cursor-pointer">
-                  {num} {num === 1 ? 'Mine' : 'Mines'}
+                <SelectItem
+                  key={num}
+                  value={num.toString()}
+                  className="cursor-pointer"
+                >
+                  {num} {num === 1 ? "Mine" : "Mines"}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-      </div>
-
-      {/* Gems */}
-      <div className="">
-        <label className="block text-base font-medium text-gray-300 mb-1">
-          Gems
-        </label>
-        <div className="w-full h-14 px-4 bg-black rounded-lg text-white text-lg border border-gray-600 flex items-center">
-          {25 - mineCount}
         </div>
-      </div>
 
-      {/* Total Profit */}
-      <div className="">
-        <div className="flex items-center justify-between mb-1">
-        <label className="block text-base font-medium text-gray-300">
-            Total Profit ({multiplier.toFixed(2)}×)
-        </label>
-          <span className="text-sm text-gray-400">
-            ${(betAmount * multiplier - betAmount).toFixed(2)}
-          </span>
-        </div>
-        <div className="relative">
-          <div className="w-full h-14 px-4 bg-black rounded-lg text-white text-lg border border-gray-600 flex items-center pr-12">
-            {(betAmount * multiplier - betAmount).toFixed(8)}
+        {/* Gems */}
+        <div className="">
+          <label className="block text-base font-medium text-gray-300 mb-1">
+            Gems
+          </label>
+          <div className="w-full h-14 px-4 bg-black rounded-lg text-white text-lg border border-gray-600 flex items-center">
+            {25 - mineCount}
           </div>
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-500 text-xl">
-          <Image src={"/token/SttToken.png"} alt="sepolia" width={50} height={20} className="w-8 h-8" />
-          </span>
         </div>
-      </div>
 
-      <div className="md:flex hidden flex-col gap-2 md:mt-4">
-        {!isPlaying ? (
-<motion.button
-            onClick={() => {
-              if (numericBetValue <= 0) {
-                toast.error("Please enter a bet amount");
-                return;
-              }
-              if (isBelowMinimum) {
-                toast.error("Minimum bet is 0.01 STT");
-                return;
-              }
-              if (hasInsufficientBalance) {
-                toast.error("Insufficient balance");
-                return;
-              }
-              if (canStart) {
-                handleStartGame();
-              }
-            }}
-            className="w-full py-3 bg-[#945DF8] hover:bg-[#945DF8]/80 transition-all duration-150 text-white rounded-lg font-semibold text-lg"
-            whileTap={{ scale: 0.98 }}
-        >
-          {hasInsufficientBalance
-            ? "Insufficient Balance"
-            : isBelowMinimum
-            ? "Minimum 0.01 STT"
-              : "Bet"}
-          </motion.button>
-        ) : (
-          <div className="flex gap-2">
+        {/* Total Profit */}
+        <div className="">
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-base font-medium text-gray-300">
+              Total Profit ({multiplier.toFixed(2)}×)
+            </label>
+            <span className="text-sm text-gray-400">
+              ${(betAmount * multiplier - betAmount).toFixed(2)}
+            </span>
+          </div>
+          <div className="relative">
+            <div className="w-full h-14 px-4 bg-black rounded-lg text-white text-lg border border-gray-600 flex items-center pr-12">
+              {(betAmount * multiplier - betAmount).toFixed(8)}
+            </div>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-500 text-xl">
+              <Image
+                src={"/token/SttToken.png"}
+                alt="sepolia"
+                width={50}
+                height={20}
+                className="w-8 h-8"
+              />
+            </span>
+          </div>
+        </div>
+
+        <div className="md:flex hidden flex-col gap-2 md:mt-4">
+          {!isPlaying ? (
             <motion.button
-              onClick={handleCashOut}
-              className="flex-1 py-3 bg-[#945DF8] hover:bg-[#945DF8]/80 transition-all duration-150 text-white rounded-lg font-semibold text-lg"
+              onClick={() => {
+                if (numericBetValue <= 0) {
+                  toast.error("Please enter a bet amount");
+                  return;
+                }
+                if (isBelowMinimum) {
+                  toast.error("Minimum bet is 0.01 STT");
+                  return;
+                }
+                if (hasInsufficientBalance) {
+                  toast.error("Insufficient balance");
+                  return;
+                }
+                if (canStart) {
+                  handleStartGame();
+                }
+              }}
+              className="w-full py-3 bg-[#945DF8] hover:bg-[#945DF8]/80 transition-all duration-150 text-white rounded-lg font-semibold text-lg"
               whileTap={{ scale: 0.98 }}
             >
-              Cash Out
-        </motion.button>
-            <button
-              onClick={pickRandomTile}
-              className="flex-1 py-3 bg-[#51545F] hover:bg-[#51545F]/80 transition-all duration-150 text-white rounded-lg font-semibold text-lg"
-            >
-              Random Pick
-            </button>
-          </div>
-        )}
+              {hasInsufficientBalance
+                ? "Insufficient Balance"
+                : isBelowMinimum
+                ? "Minimum 0.01 STT"
+                : "Bet"}
+            </motion.button>
+          ) : (
+            <div className="flex gap-2">
+              <motion.button
+                onClick={handleCashOut}
+                className="flex-1 py-3 bg-[#945DF8] hover:bg-[#945DF8]/80 transition-all duration-150 text-white rounded-lg font-semibold text-lg"
+                whileTap={{ scale: 0.98 }}
+              >
+                Cash Out
+              </motion.button>
+              <button
+                onClick={pickRandomTile}
+                className="flex-1 py-3 bg-[#51545F] hover:bg-[#51545F]/80 transition-all duration-150 text-white rounded-lg font-semibold text-lg"
+              >
+                Random Pick
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
     </div>
   );
 };
