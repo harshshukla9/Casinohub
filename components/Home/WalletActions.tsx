@@ -45,13 +45,20 @@ export function WalletActions() {
   // Check if connected first
   if (isConnected && address) {
     return (
-      <div className="w-full">
+      <div className="w-full space-y-2">
         <div className="bg-white/10 border border-white/20 rounded-lg px-3 py-2">
           <p className="text-xs text-white/60 mb-1">Connected</p>
           <p className="text-sm font-mono text-white font-medium">
             {shortenAddress(address)}
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => disconnect()}
+          className="w-full bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg px-4 py-2 text-sm font-semibold hover:bg-red-500/30 transition-colors"
+        >
+          Disconnect
+        </button>
       </div>
     )
   }
