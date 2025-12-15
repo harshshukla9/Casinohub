@@ -449,7 +449,7 @@ export function DepositButton() {
           onClick={closeModal}
         >
           <div
-            className="rounded-xl p-6 w-full max-w-xl mx-4 shadow-2xl relative border border-white/20 bg-[#240B53] backdrop-blur-xl"
+            className="rounded-xl p-6 w-full max-w-xl mx-4 shadow-2xl relative border border-white/20 bg-[#1F2326] backdrop-blur-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
@@ -608,7 +608,7 @@ export function DepositButton() {
                 )}
               </TabsContent>
 
-              <TabsContent value="withdraw" className="mt-6 max-h-[40vh] overflow-y-auto space-y-4 text-white">
+              <TabsContent value="withdraw" className="mt-6 h-fit space-y-4 text-white">
                 <div className="p-4 rounded-lg bg-white/10 border border-white/20 flex flex-col gap-1">
                   <p className="text-xs uppercase tracking-wide text-white/60 mb-1">Available Balance</p>
                   {isLoadingUserBalance ? (
