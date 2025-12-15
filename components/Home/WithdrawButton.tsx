@@ -1,6 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { useAccount } from 'wagmi'
+import { useAccount, useSwitchChain, useChainId, useWalletClient, usePublicClient } from 'wagmi'
+import { useServerSigner, useContractPaused, useWithdrawalContractBalance } from '@/smartcontracthooks'
+import { formatUnits, parseUnits } from 'viem'
+import { StatusL2Withdrawl, STT_TOKEN_ADDRESS } from '@/lib/contract'
+
+// Chain ID for Status Network Sepolia (from @reown/appkit/networks)
+const STATUS_NETWORK_SEPOLIA_CHAIN_ID = 1660990954
 
 interface WithdrawalHistory {
   _id: string
@@ -25,10 +31,35 @@ export function WithdrawButton() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [userBalance, setUserBalance] = useState<number>(0)
   const [withdrawalData, setWithdrawalData] = useState<WithdrawalData | null>(null)
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
-  const { address } = useAccount()
+  const { address, isConnected } = useAccount()
+  const chainId = useChainId()
+  const { switchChain } = useSwitchChain()
+  const { data: walletClient } = useWalletClient()
+  const publicClient = usePublicClient()
+
+  // Removed withdrawalSignature state - not needed with simplified flow
+
+  // Contract hooks / data
+  const { serverSigner } = useServerSigner()
+  const { isPaused } = useContractPaused()
+  const { balance: contractBalance } = useWithdrawalContractBalance()
+
+  // Log contract status
+  useEffect(() => {
+    if (serverSigner) {
+      console.log('📋 Contract Server Signer:', serverSigner)
+    }
+    if (isPaused !== undefined) {
+      console.log('⏸️ Contract Paused:', isPaused)
+    }
+    if (contractBalance !== undefined) {
+      console.log('💰 Contract Balance:', formatUnits(contractBalance, 18), 'STT')
+    }
+  }, [serverSigner, isPaused, contractBalance])
 
   const MIN_WITHDRAWAL_AMOUNT = 0.1
 
@@ -86,8 +117,11 @@ export function WithdrawButton() {
     setIsModalOpen(false)
     setAmount('')
     setError('')
+    setSuccessMessage('')
     setIsProcessing(false)
   }
+
+  // Success handling is done directly in handleWithdraw (like claim reward)
 
   // Validate amount when it changes
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,9 +146,39 @@ export function WithdrawButton() {
   }
 
   const handleWithdraw = async () => {
+    console.log('========== WITHDRAW STARTED ==========')
+    console.log('🚀 handleWithdraw called')
+    console.log('Connected:', isConnected, 'Address:', address, 'ChainId:', chainId)
+    console.log('walletClient available:', !!walletClient, 'publicClient available:', !!publicClient)
+    
     if (!address || !amount) {
       setError('Please enter a valid amount')
       return
+    }
+
+    if (!walletClient || !publicClient) {
+      console.error('Wallet or public client missing', { walletClient: !!walletClient, publicClient: !!publicClient })
+      setError('Wallet not ready. Please reconnect your wallet.')
+      return
+    }
+
+    // Check if we're on the right network
+    if (chainId !== STATUS_NETWORK_SEPOLIA_CHAIN_ID) {
+      console.log(`⚠️ Wrong network. Current: ${chainId}, Required: ${STATUS_NETWORK_SEPOLIA_CHAIN_ID}`)
+      setError(`Please switch to Status L2 Sepolia network`)
+      
+      // Try to switch network automatically
+      try {
+        if (switchChain) {
+          console.log('🔄 Attempting to switch chain...')
+          await switchChain({ chainId: STATUS_NETWORK_SEPOLIA_CHAIN_ID })
+          console.log('✅ Chain switched successfully')
+        }
+      } catch (switchError) {
+        console.error('❌ Failed to switch chain:', switchError)
+        setError('Please manually switch to Status L2 Sepolia network in your wallet')
+        return
+      }
     }
 
     const withdrawAmount = parseFloat(amount)
@@ -130,15 +194,14 @@ export function WithdrawButton() {
       return
     }
 
-    if (!withdrawalData?.canWithdraw) {
-      setError(`You can only withdraw once per 24 hours. Please wait ${withdrawalData?.hoursRemaining} more hour(s).`)
-      return
-    }
+    // No cooldown check - removed 24-hour restriction
 
     setIsProcessing(true)
     setError('')
+    setSuccessMessage('')
 
     try {
+      // Step 1: Request withdrawal signature from API
       const response = await fetch('/api/withdraw', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -154,16 +217,75 @@ export function WithdrawButton() {
         throw new Error(result.error || 'Failed to process withdrawal')
       }
 
-      // Success! Dispatch event to refresh balance
+      console.log('API Response received:', result)
+      console.log('Signature:', result.signature)
+      console.log('Nonce:', result.nonce)
+      console.log('Amount:', withdrawAmount)
+
+      // Update balance display
+      setUserBalance(result.newBalance)
+
+      setSuccessMessage('Please approve the transaction in your wallet...')
+
+      // Call smart contract to claim withdrawal DIRECTLY (no hook)
+      try {
+        const amountInWei = parseUnits(withdrawAmount.toString(), 18)
+
+        console.log('Calling walletClient.writeContract...', {
+          contractAddress: StatusL2Withdrawl.contractAddress,
+          token: STT_TOKEN_ADDRESS,
+          amountInWei: amountInWei.toString(),
+          nonce: result.nonce,
+          signature: result.signature,
+        })
+
+        const txHash = await walletClient.writeContract({
+          address: StatusL2Withdrawl.contractAddress as `0x${string}`,
+          abi: StatusL2Withdrawl.abi,
+          functionName: 'claimWithdrawal',
+          args: [
+            STT_TOKEN_ADDRESS as `0x${string}`,
+            amountInWei,
+            BigInt(result.nonce),
+            result.signature as `0x${string}`,
+          ],
+        })
+
+        console.log('Transaction submitted:', txHash)
+
+        // Wait for confirmation
+        const receipt = await publicClient.waitForTransactionReceipt({
+          hash: txHash,
+          timeout: 60_000,
+        })
+
+        console.log('Transaction receipt:', receipt)
+
+        if (receipt.status !== 'success') {
+          throw new Error('Transaction failed on-chain')
+        }
+      } catch (contractError: any) {
+        console.error('Contract call error:', contractError)
+        setError(contractError?.message || 'Failed to claim withdrawal on-chain')
+        return
+      }
+
+      // Success message with details
+      setSuccessMessage(`✅ Withdrawal claimed successfully! ${withdrawAmount} STT transferred to your wallet.`)
+      
+      // Refresh balance
       window.dispatchEvent(new CustomEvent('balanceUpdated'))
+      fetchUserBalance()
       
-      alert(`✅ Withdrawal request submitted!\n💰 Amount: ${withdrawAmount} STT\n📊 New Balance: ${result.newBalance} STT\n⏱️ Estimated processing: ${result.estimatedProcessingTime}\n\nYour balance has been deducted immediately.`)
+      // Auto-close after 3 seconds
+      setTimeout(() => {
+        closeModal()
+        setSuccessMessage('')
+      }, 3000)
       
-      closeModal()
-      
-    } catch (error) {
-      console.error('Withdrawal failed:', error)
-      setError(error instanceof Error ? error.message : 'Failed to process withdrawal')
+    } catch (error: any) {
+      console.error('Error withdrawing:', error)
+      setError(error?.message || 'Failed to process withdrawal')
     } finally {
       setIsProcessing(false)
     }
@@ -207,14 +329,23 @@ export function WithdrawButton() {
               <p className="text-lg font-semibold text-green-400">{userBalance.toFixed(4)} STT</p>
             </div>
 
-            {/* 24-Hour Cooldown Warning */}
-            {!isLoadingHistory && withdrawalData && !withdrawalData.canWithdraw && (
-              <div className="mb-4 p-3 bg-yellow-900/30 border border-yellow-700/50 rounded">
-                <p className="text-sm text-yellow-400">
-                  ⏱️ You can only withdraw once per 24 hours. Please wait {withdrawalData.hoursRemaining} more hour(s).
-                </p>
+            {/* Contract Status Info */}
+            {(isPaused || (contractBalance !== undefined && contractBalance < BigInt(1e18))) && (
+              <div className="mb-4 p-3 bg-red-900/30 border border-red-700/50 rounded">
+                {isPaused && (
+                  <p className="text-sm text-red-400 mb-2">
+                    ⚠️ Withdrawal contract is currently paused
+                  </p>
+                )}
+                {contractBalance !== undefined && contractBalance < BigInt(1e18) && (
+                  <p className="text-sm text-red-400">
+                    ⚠️ Contract has insufficient balance: {formatUnits(contractBalance, 18)} STT
+                  </p>
+                )}
               </div>
             )}
+
+            {/* 24-Hour Cooldown Removed */}
 
             {/* Amount Input */}
             <div className="mb-4">
@@ -244,7 +375,15 @@ export function WithdrawButton() {
               />
               {/* Error Message */}
               {error && (
-                <p className="mt-2 text-sm text-red-400">{error}</p>
+                <div className="mt-2 p-2 bg-red-900/30 border border-red-700/50 rounded">
+                  <p className="text-sm text-red-400">{error}</p>
+                </div>
+              )}
+              {/* Success Message */}
+              {successMessage && (
+                <div className="mt-2 p-2 bg-green-900/30 border border-green-700/50 rounded">
+                  <p className="text-sm text-green-400">{successMessage}</p>
+                </div>
               )}
             </div>
 
@@ -278,7 +417,7 @@ export function WithdrawButton() {
                     </div>
                   ))}
                 </div>
-              </div>
+          </div>
             )}
 
             {/* Action Buttons */}
@@ -290,11 +429,19 @@ export function WithdrawButton() {
                 Cancel
               </button>
               <button
-                onClick={handleWithdraw}
-                disabled={Boolean(isProcessing || !amount || !!error || isLoadingHistory || (withdrawalData && !withdrawalData.canWithdraw))}
+                onClick={() => {
+                  handleWithdraw()
+                }}
+                disabled={Boolean(
+                  isProcessing || 
+                  !amount || 
+                  isLoadingHistory
+                )}
                 className="flex-1 py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isProcessing ? 'Processing...' : 'Withdraw'}
+                {isProcessing
+                  ? 'Processing...'
+                  : 'Withdraw'}
               </button>
             </div>
 

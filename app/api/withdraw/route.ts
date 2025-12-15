@@ -2,12 +2,116 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import User from '@/lib/user';
 import Withdrawal from '@/lib/withdrawal';
+import { createPublicClient, createWalletClient, http, keccak256, encodePacked, defineChain } from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
+import { StatusL2Withdrawl, STT_TOKEN_ADDRESS } from '@/lib/contract';
+
+// Define Status Network Sepolia chain properly
+const statusNetworkSepolia = defineChain({
+  id: 1660990954,
+  name: 'Status Network Sepolia',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'ETH',
+    symbol: 'ETH',
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://public.sepolia.rpc.status.network'],
+    },
+  },
+  blockExplorers: {
+    default: { name: 'Explorer', url: 'https://sepolia-explorer.status.network' },
+  },
+});
 
 // Minimum withdrawal amount
 const MIN_WITHDRAWAL_AMOUNT = 0.1;
 
 // 24 hour cooldown in milliseconds
 const COOLDOWN_PERIOD = 24 * 60 * 60 * 1000;
+
+// Get server private key from environment
+const SERVER_PRIVATE_KEY = process.env.SERVER_PRIVATE_KEY as `0x${string}`;
+
+if (!SERVER_PRIVATE_KEY) {
+  console.error('⚠️ SERVER_PRIVATE_KEY is not set in environment variables!');
+}
+
+// Create public client for reading contract data
+const publicClient = createPublicClient({
+  chain: statusNetworkSepolia,
+  transport: http('https://public.sepolia.rpc.status.network'),
+});
+
+/**
+ * Get user's current nonce from the contract
+ */
+async function getUserNonce(userAddress: string): Promise<bigint> {
+  try {
+    const nonce = await publicClient.readContract({
+      address: StatusL2Withdrawl.contractAddress as `0x${string}`,
+      abi: StatusL2Withdrawl.abi,
+      functionName: 'getUserNonce',
+      args: [userAddress as `0x${string}`],
+    });
+    return nonce as bigint;
+  } catch (error) {
+    console.error('Failed to get user nonce:', error);
+    throw new Error('Failed to get user nonce from contract');
+  }
+}
+
+/**
+ * Generate withdrawal signature
+ * Signs: keccak256(user, token, amount, nonce, contractAddress)
+ */
+async function generateWithdrawalSignature(
+  userAddress: string,
+  tokenAddress: string,
+  amountInWei: bigint,
+  nonce: bigint,
+  contractAddress: string
+): Promise<string> {
+  try {
+    // Create account from private key
+    const account = privateKeyToAccount(SERVER_PRIVATE_KEY);
+
+    // Create the message hash (same format as the contract)
+    const messageHash = keccak256(
+      encodePacked(
+        ['address', 'address', 'uint256', 'uint256', 'address'],
+        [
+          userAddress as `0x${string}`,
+          tokenAddress as `0x${string}`,
+          amountInWei,
+          nonce,
+          contractAddress as `0x${string}`,
+        ]
+      )
+    );
+
+    console.log('Signing withdrawal:', {
+      userAddress,
+      tokenAddress,
+      amountInWei: amountInWei.toString(),
+      nonce: nonce.toString(),
+      contractAddress,
+      messageHash,
+      signerAddress: account.address,
+    });
+
+    // Sign the message hash
+    const signature = await account.signMessage({
+      message: { raw: messageHash },
+    });
+
+    return signature;
+  } catch (error) {
+    console.error('Failed to generate signature:', error);
+    throw new Error('Failed to generate withdrawal signature');
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -73,27 +177,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Check for pending withdrawals in the last 24 hours
-    const twentyFourHoursAgo = new Date(Date.now() - COOLDOWN_PERIOD);
-    const recentWithdrawal = await Withdrawal.findOne({
-      walletAddress: normalizedWalletAddress,
-      requestedAt: { $gte: twentyFourHoursAgo },
-      status: { $in: ['pending', 'completed'] }
-    }).sort({ requestedAt: -1 });
-    
-    if (recentWithdrawal) {
-      const timeSinceLastWithdrawal = Date.now() - recentWithdrawal.requestedAt.getTime();
-      const hoursRemaining = Math.ceil((COOLDOWN_PERIOD - timeSinceLastWithdrawal) / (60 * 60 * 1000));
-      
-      return NextResponse.json(
-        { 
-          error: `You can only request one withdrawal per 24 hours. Please wait ${hoursRemaining} more hour(s).`,
-          lastWithdrawalTime: recentWithdrawal.requestedAt,
-          hoursRemaining
-        },
-        { status: 429 } // 429 Too Many Requests
-      );
-    }
+    // 24-hour cooldown removed - users can withdraw anytime
     
     // Deduct balance immediately (before creating withdrawal request)
     const previousBalance = user.balance;
@@ -126,14 +210,66 @@ export async function POST(request: NextRequest) {
       status: withdrawal.status
     });
     
+    // Get user's current nonce from the contract
+    let nonce: bigint;
+    try {
+      nonce = await getUserNonce(normalizedWalletAddress);
+      console.log('Withdraw API - User nonce:', nonce.toString());
+    } catch (error) {
+      console.error('Failed to get nonce:', error);
+      // Rollback balance deduction
+      user.balance = previousBalance;
+      user.totalWithdrawn = (user.totalWithdrawn || 0) - withdrawAmount;
+      await user.save();
+      await Withdrawal.findByIdAndDelete(withdrawal._id);
+      
+      return NextResponse.json(
+        { error: 'Failed to get nonce from contract. Please try again.' },
+        { status: 500 }
+      );
+    }
+
+    // Generate withdrawal signature
+    let signature: string;
+    try {
+      // Convert amount to wei (18 decimals for STT token)
+      const amountInWei = BigInt(Math.floor(withdrawAmount * 1e18));
+      
+      signature = await generateWithdrawalSignature(
+        normalizedWalletAddress,
+        STT_TOKEN_ADDRESS,
+        amountInWei,
+        nonce,
+        StatusL2Withdrawl.contractAddress
+      );
+      
+      console.log('Withdraw API - Signature generated:', signature);
+    } catch (error) {
+      console.error('Failed to generate signature:', error);
+      // Rollback balance deduction
+      user.balance = previousBalance;
+      user.totalWithdrawn = (user.totalWithdrawn || 0) - withdrawAmount;
+      await user.save();
+      await Withdrawal.findByIdAndDelete(withdrawal._id);
+      
+      return NextResponse.json(
+        { error: 'Failed to generate withdrawal signature. Please try again.' },
+        { status: 500 }
+      );
+    }
+    
     return NextResponse.json({
       success: true,
       withdrawalId: withdrawal._id,
       amount: withdrawAmount,
       newBalance: user.balance,
       status: 'pending',
-      message: 'Withdrawal request created successfully. Balance deducted immediately.',
-      estimatedProcessingTime: '24-48 hours'
+      message: 'Withdrawal request approved. Please claim your tokens.',
+      // Return signature data for claiming
+      signature,
+      nonce: nonce.toString(),
+      tokenAddress: STT_TOKEN_ADDRESS,
+      contractAddress: StatusL2Withdrawl.contractAddress,
     });
     
   } catch (error) {
@@ -167,22 +303,12 @@ export async function GET(request: NextRequest) {
       walletAddress: normalizedWalletAddress
     }).sort({ requestedAt: -1 }).limit(10);
     
-    // Check if user can make a new withdrawal
-    const twentyFourHoursAgo = new Date(Date.now() - COOLDOWN_PERIOD);
-    const recentWithdrawal = await Withdrawal.findOne({
-      walletAddress: normalizedWalletAddress,
-      requestedAt: { $gte: twentyFourHoursAgo },
-      status: { $in: ['pending', 'completed'] }
-    }).sort({ requestedAt: -1 });
-    
+    // No cooldown - users can always withdraw
     let canWithdraw = true;
     let hoursRemaining = 0;
-    
-    if (recentWithdrawal) {
-      const timeSinceLastWithdrawal = Date.now() - recentWithdrawal.requestedAt.getTime();
-      hoursRemaining = Math.ceil((COOLDOWN_PERIOD - timeSinceLastWithdrawal) / (60 * 60 * 1000));
-      canWithdraw = hoursRemaining <= 0;
-    }
+    const recentWithdrawal = await Withdrawal.findOne({
+      walletAddress: normalizedWalletAddress,
+    }).sort({ requestedAt: -1 });
     
     return NextResponse.json({
       withdrawals,

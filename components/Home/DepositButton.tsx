@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useAccount } from 'wagmi'
+import { useAccount, useWalletClient, usePublicClient } from 'wagmi'
 import { useDeposit, usePlayerDeposits, useTokenBalance, useTokenAllowance, useApproveToken, useApproveTokenMax } from '../../smartcontracthooks'
+import { StatusL2Withdrawl, STT_TOKEN_ADDRESS } from '@/lib/contract'
+import { parseUnits } from 'viem'
 
 interface WithdrawalHistory {
   _id: string
@@ -25,6 +27,8 @@ type TabValue = 'deposit' | 'withdraw'
 
 export function DepositButton() {
   const { address } = useAccount()
+  const { data: walletClient } = useWalletClient()
+  const publicClient = usePublicClient()
 
   const [activeTab, setActiveTab] = useState<TabValue>('deposit')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -242,6 +246,12 @@ export function DepositButton() {
       return
     }
 
+    if (!walletClient || !publicClient) {
+      console.error('Wallet or public client not ready', { walletClient: !!walletClient, publicClient: !!publicClient })
+      setWithdrawError('Wallet not ready. Please reconnect your wallet.')
+      return
+    }
+
     const amount = parseFloat(withdrawAmount)
     if (amount < MIN_WITHDRAWAL_AMOUNT) {
       setWithdrawError(`Minimum withdrawal is ${MIN_WITHDRAWAL_AMOUNT} STT`)
@@ -259,6 +269,9 @@ export function DepositButton() {
     setIsProcessingWithdraw(true)
     setWithdrawError('')
     try {
+      console.log('========== WITHDRAW (DB + CONTRACT) START ==========')
+      console.log('Step 1: Calling /api/withdraw...')
+
       const response = await fetch('/api/withdraw', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -274,13 +287,78 @@ export function DepositButton() {
         throw new Error(result.error || 'Failed to process withdrawal')
       }
 
-      window.dispatchEvent(new CustomEvent('balanceUpdated'))
+      console.log('API /api/withdraw result:', result)
 
-      setSuccessMessage(`Withdrawal request submitted! Amount: ${amount} STT. New Balance: ${result.newBalance} STT`)
-      setTimeout(() => {
-        setSuccessMessage('')
-        setIsModalOpen(false)
-      }, 3000)
+      // Step 2: Call smart contract to actually send tokens
+      try {
+        const amountInWei = parseUnits(amount.toString(), 18)
+
+        console.log('Step 2: Calling claimWithdrawal on contract...', {
+          contractAddress: StatusL2Withdrawl.contractAddress,
+          token: STT_TOKEN_ADDRESS,
+          amountInWei: amountInWei.toString(),
+          nonce: result.nonce,
+          signature: result.signature,
+        })
+
+        const txHash = await walletClient.writeContract({
+          address: StatusL2Withdrawl.contractAddress as `0x${string}`,
+          abi: StatusL2Withdrawl.abi,
+          functionName: 'claimWithdrawal',
+          args: [
+            STT_TOKEN_ADDRESS as `0x${string}`,
+            amountInWei,
+            BigInt(result.nonce),
+            result.signature as `0x${string}`,
+          ],
+        })
+
+        console.log('Transaction submitted:', txHash)
+
+        const receipt = await publicClient.waitForTransactionReceipt({
+          hash: txHash,
+          timeout: 60_000,
+        })
+
+        console.log('Transaction receipt:', receipt)
+
+        if (receipt.status !== 'success') {
+          throw new Error('Transaction failed on-chain')
+        }
+
+        // Mark withdrawal as completed in DB
+        try {
+          const completeRes = await fetch('/api/withdraw/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              withdrawalId: result.withdrawalId,
+              walletAddress: address,
+              transactionHash: txHash,
+              status: 'completed',
+            }),
+          })
+
+          const completeJson = await completeRes.json()
+          console.log('Withdrawal complete API response:', completeJson)
+        } catch (markErr) {
+          console.error('Failed to mark withdrawal as completed in DB:', markErr)
+          // Not fatal for the user – on-chain withdrawal already succeeded
+        }
+
+        // Step 3: Update UI
+        window.dispatchEvent(new CustomEvent('balanceUpdated'))
+
+        setSuccessMessage(`✅ Withdrawal successful! ${amount} STT sent to your wallet.`)
+        setTimeout(() => {
+          setSuccessMessage('')
+          setIsModalOpen(false)
+        }, 3000)
+      } catch (contractError: any) {
+        console.error('Smart contract withdrawal failed:', contractError)
+        setWithdrawError(contractError?.message || 'Failed to complete on-chain withdrawal')
+        return
+      }
     } catch (error) {
       console.error('Withdrawal failed:', error)
       setWithdrawError(error instanceof Error ? error.message : 'Failed to process withdrawal')
