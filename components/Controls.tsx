@@ -74,13 +74,20 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
   const hasInsufficientBalance =
     userBalance && numericBetValue > userBalance.balance;
   const isBelowMinimum = numericBetValue > 0 && numericBetValue < 0.01;
+  
+  // Check if current configuration requires bet limit (1 mine or 24 mines)
+  const isExtremeConfiguration = mineCount === 1 || mineCount === 24;
+  const MAX_BET_FOR_EXTREME = 5000;
+  const exceedsExtremeLimit = isExtremeConfiguration && numericBetValue > MAX_BET_FOR_EXTREME;
+  
   const canStart =
     (status === "idle" ||
       status === "won" ||
       status === "lost" ||
       status === "cashed_out") &&
     numericBetValue >= 0.01 &&
-    !hasInsufficientBalance;
+    !hasInsufficientBalance &&
+    !exceedsExtremeLimit;
   const canCashOut = isPlaying;
   const canReset =
     status === "won" || status === "lost" || status === "cashed_out";
@@ -124,6 +131,23 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
       setBetInputValue(rounded.toFixed(2));
     }
   }, [status, betAmount]);
+
+  // Auto-cap bet amount when mine count changes to extreme configuration
+  useEffect(() => {
+    if (isPlaying || !betInputValue) return; // Don't modify bet while playing or if empty
+    
+    const isExtremeConfiguration = mineCount === 1 || mineCount === 24;
+    const MAX_BET_FOR_EXTREME = 5000;
+    const currentBet = parseFloat(betInputValue) || 0;
+    
+    if (isExtremeConfiguration && currentBet > MAX_BET_FOR_EXTREME) {
+      setBetInputValue(MAX_BET_FOR_EXTREME.toFixed(2));
+      toast.info(
+        `Maximum bet for ${mineCount === 1 ? '1 mine (24 diamonds)' : '24 mines (1 diamond)'} is ${MAX_BET_FOR_EXTREME.toLocaleString()} STT`,
+        { duration: 3000 }
+      );
+    }
+  }, [mineCount, isPlaying, betInputValue]);
 
   useEffect(() => {
     if (!address) return;
@@ -169,6 +193,22 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
       return;
     }
 
+    // Apply bet limit for extreme configurations (1 mine or 24 mines)
+    const isExtremeConfiguration = mineCount === 1 || mineCount === 24;
+    const MAX_BET_FOR_EXTREME = 5000;
+    
+    if (isExtremeConfiguration) {
+      const numValue = parseFloat(sanitized) || 0;
+      if (numValue > MAX_BET_FOR_EXTREME) {
+        setBetInputValue(MAX_BET_FOR_EXTREME.toFixed(2));
+        toast.info(
+          `Maximum bet for ${mineCount === 1 ? '1 mine (24 diamonds)' : '24 mines (1 diamond)'} is ${MAX_BET_FOR_EXTREME.toLocaleString()} STT`,
+          { duration: 3000 }
+        );
+        return;
+      }
+    }
+
     setBetInputValue(sanitized);
   };
 
@@ -183,14 +223,37 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
   };
 
   const handleBetDouble = () => {
+    const isExtremeConfiguration = mineCount === 1 || mineCount === 24;
+    const MAX_BET_FOR_EXTREME = 5000;
+    
     const newValue = numericBetValue * 2;
     const rounded = Math.round(newValue * 100) / 100;
+    
+    // Cap at max bet for extreme configurations
+    if (isExtremeConfiguration && rounded > MAX_BET_FOR_EXTREME) {
+      setBetInputValue(MAX_BET_FOR_EXTREME.toFixed(2));
+      toast.info(
+        `Maximum bet for ${mineCount === 1 ? '1 mine (24 diamonds)' : '24 mines (1 diamond)'} is ${MAX_BET_FOR_EXTREME.toLocaleString()} STT`,
+        { duration: 3000 }
+      );
+      return;
+    }
+    
     setBetInputValue(rounded.toFixed(2));
   };
 
   const handleStartGame = async () => {
     if (canStart) {
       try {
+        // Validate bet limit for extreme configurations
+        const isExtremeConfiguration = mineCount === 1 || mineCount === 24;
+        const MAX_BET_FOR_EXTREME = 5000;
+        
+        if (isExtremeConfiguration && numericBetValue > MAX_BET_FOR_EXTREME) {
+          toast.error(`Maximum bet for ${mineCount === 1 ? '1 mine (24 diamonds)' : '24 mines (1 diamond)'} is ${MAX_BET_FOR_EXTREME} STT`);
+          return;
+        }
+        
         // Clear previous game's verification data before starting new game
         clearVerificationData();
         resetGame();
@@ -327,6 +390,18 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
 
     const startNextGame = async () => {
       try {
+        // Validate bet limit for extreme configurations
+        const isExtremeConfiguration = mineCount === 1 || mineCount === 24;
+        const MAX_BET_FOR_EXTREME = 5000;
+        
+        if (isExtremeConfiguration && numericBetValue > MAX_BET_FOR_EXTREME) {
+          setAutoBetError(`Maximum bet for ${mineCount === 1 ? '1 mine (24 diamonds)' : '24 mines (1 diamond)'} is ${MAX_BET_FOR_EXTREME} STT`);
+          setIsAutoBetting(false);
+          setAutoBetRemaining(0);
+          setTimeout(() => setAutoBetError(""), 5000);
+          return;
+        }
+        
         clearVerificationData();
         resetGame();
         const wagerAmount = Math.round(numericBetValue * 100) / 100;
@@ -407,6 +482,18 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
     if (numericBetValue < 0.01) {
       setAutoBetError("Minimum bet amount is 0.01 STT");
       setTimeout(() => setAutoBetError(""), 3000);
+      return;
+    }
+
+    // Check bet limit for extreme configurations
+    const isExtremeConfiguration = mineCount === 1 || mineCount === 24;
+    const MAX_BET_FOR_EXTREME = 5000;
+    
+    if (isExtremeConfiguration && numericBetValue > MAX_BET_FOR_EXTREME) {
+      setAutoBetError(
+        `Maximum bet for ${mineCount === 1 ? '1 mine (24 diamonds)' : '24 mines (1 diamond)'} is ${MAX_BET_FOR_EXTREME} STT`
+      );
+      setTimeout(() => setAutoBetError(""), 5000);
       return;
     }
 
@@ -587,6 +674,18 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
               </div>
             </div>
           )}
+          {exceedsExtremeLimit && (
+            <div className="bg-orange-500/20 border border-orange-500/30 rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <div className="text-sm text-orange-300">
+                  <div className="font-medium">Maximum Bet Limit</div>
+                  <div className="text-xs">
+                    Maximum bet for {mineCount === 1 ? '1 mine (24 diamonds)' : '24 mines (1 diamond)'} is 5,000 STT
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Input
@@ -707,6 +806,10 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
                   toast.error("Insufficient balance");
                   return;
                 }
+                if (exceedsExtremeLimit) {
+                  toast.error(`Maximum bet for ${mineCount === 1 ? '1 mine (24 diamonds)' : '24 mines (1 diamond)'} is 5,000 STT`);
+                  return;
+                }
                 if (canStart) {
                   handleStartGame();
                 }
@@ -718,6 +821,8 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
                 ? "Insufficient Balance"
                 : isBelowMinimum
                 ? "Minimum 0.01 STT"
+                : exceedsExtremeLimit
+                ? "Max 5,000 STT"
                 : "Bet"}
             </motion.button>
           ) : (
