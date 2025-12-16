@@ -60,10 +60,7 @@ export const Header = () => {
                 <div className="space-y-3">
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-white/60 uppercase tracking-wide">Wallet</p>
-                    <div className='flex gap-2'>
                       <WalletActions />
-                      <UserBalanceDisplay />
-                    </div>
                   </div>
                   <div className="pt-2 border-t border-white/10">
                     <DepositButton />

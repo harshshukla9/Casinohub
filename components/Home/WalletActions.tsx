@@ -3,6 +3,7 @@ import { formatEther } from 'viem'
 import { useAccount, useBalance, useDisconnect } from 'wagmi'
 import { useAppKit } from '@reown/appkit/react'
 import { useState, useEffect } from 'react'
+import { UserBalanceDisplay } from './UserBalanceDisplay'
 
 
 export function WalletActions() {
@@ -46,11 +47,14 @@ export function WalletActions() {
   if (isConnected && address) {
     return (
       <div className="w-full space-y-2">
+        <div className='flex justify-between'>
         <div className="bg-white/10 border border-white/20 rounded-lg px-3 py-2">
           <p className="text-xs text-white/60 mb-1">Connected</p>
           <p className="text-sm font-mono text-white font-medium">
             {shortenAddress(address)}
           </p>
+        </div>
+        <UserBalanceDisplay />
         </div>
         <button
           type="button"
