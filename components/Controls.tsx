@@ -565,7 +565,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
             </label>
           </div>
           {hasInsufficientBalance && (
-            <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3">
+            <div className="bg-red-500/20 my-2 border border-red-500/30 rounded-lg p-3">
               <div className="flex items-center gap-2">
                 <div className="text-sm text-red-300">
                   <div className="font-medium">Insufficient Balance</div>

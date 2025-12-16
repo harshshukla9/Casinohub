@@ -62,7 +62,24 @@ export function DepositButton() {
   const { deposits: contractDeposits, refetch: refetchDeposits } = usePlayerDeposits()
 
   // Check token allowance
-  const { allowance, isLoading: isLoadingAllowance, refetch: refetchAllowance } = useTokenAllowance()
+  const { allowance, allowanceWei, isLoading: isLoadingAllowance, refetch: refetchAllowance } = useTokenAllowance()
+  
+  // Format allowance for display - show "Unlimited" for max uint256
+  const formatAllowance = (allowanceStr: string, allowanceWei: bigint) => {
+    // Max uint256 value: 2^256 - 1
+    const maxUint256 = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
+    // If allowance is max uint256 (unlimited approval), show "Unlimited"
+    if (allowanceWei >= maxUint256) {
+      return 'Unlimited'
+    }
+    // For regular allowances, format nicely
+    const num = parseFloat(allowanceStr)
+    if (isNaN(num)) return '0'
+    if (num >= 1000000) {
+      return num.toLocaleString('en-US', { maximumFractionDigits: 2 })
+    }
+    return num.toLocaleString('en-US', { maximumFractionDigits: 4 })
+  }
 
   // Approve token hooks
   const { approve, isPending: isApproving, isConfirmed: isApproveConfirmed, hash: approveHash } = useApproveToken({
@@ -564,8 +581,8 @@ export function DepositButton() {
                         )}
                       </div>
                     ) : (
-                      <p className="text-sm text-green-400">
-                        ✅ You have sufficient approval ({allowance} STT approved)
+                      <p className="text-sm text-green-400 break-words">
+                        ✅ You have sufficient approval ({formatAllowance(allowance || '0', allowanceWei || BigInt(0))} STT approved)
                       </p>
                     )}
                   </div>
@@ -647,9 +664,9 @@ export function DepositButton() {
                   )}
                 </div>
 
-                <div className="p-3 rounded-lg bg-blue-500/20 border border-blue-400/30 text-xs text-blue-100">
+                {/* <div className="p-3 rounded-lg bg-blue-500/20 border border-blue-400/30 text-xs text-blue-100">
                   ⚠️ Your balance will be deducted immediately upon request. Withdrawals are processed within 24-48 hours.
-                </div>
+                </div> */}
 
                 {withdrawalData && withdrawalData.withdrawals.length > 0 && (
                   <div>
