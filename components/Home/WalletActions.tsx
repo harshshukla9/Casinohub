@@ -47,7 +47,7 @@ export function WalletActions() {
   if (isConnected && address) {
     return (
       <div className="w-full space-y-2">
-        <div className='flex justify-between'>
+        <div className='flex justify-between gap-2'>
         <div className="bg-white/10 border border-white/20 rounded-lg px-3 py-2">
           <p className="text-xs text-white/60 mb-1">Connected</p>
           <p className="text-sm font-mono text-white font-medium">
