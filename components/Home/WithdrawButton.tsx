@@ -388,11 +388,11 @@ export function WithdrawButton() {
             </div>
 
             {/* Important Notice */}
-            <div className="mb-4 p-3 bg-blue-900/30 border border-blue-700/50 rounded">
+            {/* <div className="mb-4 p-3 bg-blue-900/30 border border-blue-700/50 rounded">
               <p className="text-xs text-blue-300">
                 ⚠️ Your balance will be deducted immediately upon request. Withdrawals are processed within 24-48 hours.
               </p>
-            </div>
+            </div> */}
 
             {/* Withdrawal History */}
             {withdrawalData && withdrawalData.withdrawals.length > 0 && (
