@@ -500,7 +500,7 @@ export const GameBoard = () => {
           <div className="relative w-[95vw] sm:w-[90vw] md:w-[80vw] lg:w-[50vw] z-10 sm:p-2 md:p-6 lg:p-7 xl:px-16 xl:pb-16 xl:pt-14 overflow-hidden h-[50vh] sm:h-[55vh] md:h-[60vh] lg:h-[78vh] xl:h-[93vh] flex flex-col items-center justify-center">
             <div className="absolute inset-0 bg-[url('/all%20assets/MineFrame.svg')] bg-contain md:bg-contain lg:bg-contain xl:bg-contain bg-no-repeat bg-center pointer-events-none" />
             <div
-              className={`grid grid-cols-5 grid-rows-5 z-20 w-[98%] h-[98%] sm:w-[98%] sm:h-[98%] md:w-[98%] md:h-[98%] lg:w-[98%] lg:h-[98%] xl:w-[98%] xl:h-[98%]`}
+              className={`grid grid-cols-5 grid-rows-5 z-20 w-[86%] h-[84%] sm:w-[86%] sm:h-[84%] md:w-[98%] md:h-[98%] lg:w-[98%] lg:h-[98%] xl:w-[98%] xl:h-[98%]`}
               style={{ 
                 padding: "clamp(12px, 5%, 28px)",
                 gap: "clamp(6px, 2%, 14px)",
