@@ -1,8 +1,7 @@
-import Image from "next/image";
-import App from "@/components/pages/app";
+import { GameSelection } from "@/components/shared/GameSelection";
 
 export default function Home() {
   return (
-    <App />
+    <GameSelection />
   );
 }
