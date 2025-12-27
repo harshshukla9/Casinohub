@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import CustomInput from "@/components/shared/Input";
-import CurrentBets from "@/components/shared/CurrentBets";
 import SwitchTab from "@/components/shared/SwitchTab";
 import axiosServices from "@/util/axios";
 import Modal from "@/components/shared/Modal";
@@ -106,7 +105,7 @@ const VerifyModal = ({ gameId, Label, setGameId }: any) => {
                         <div className="text-white text-sm">Client Seed</div>
                         <CustomInput disabled={true} value={showGame.publicSeed} type="string" icon={<button onClick={() => copyToClipboard(showGame.publicSeed)} className="px-1 py-2 w-full "></button>} />
                     </> : <>
-                        <CurrentBets bets={showGame.bets} />
+
                     </>}
                 </div>
             }

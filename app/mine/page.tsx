@@ -17,6 +17,7 @@ import { useAccount } from "wagmi";
 import { useUserBalance } from "@/hooks/useUserBalance";
 import { placeBet as placeBetBalance, cashout as cashoutBalance, hasSufficientBalance } from "@/lib/game-balance";
 import { GameBalanceDisplay } from "@/components/shared/GameBalanceDisplay";
+import { motion } from "motion/react";
 const MINE_API = "/api/mine";
 
 function calculateMinesGame(mines: number, picks: number, bet: number): any {
@@ -151,13 +152,13 @@ const MineGame: React.FC = () => {
             alert("Please connect your wallet");
             return;
         }
-        
+
         // Check balance before creating bet
         if (!hasSufficientBalance(balance, betAmount)) {
             alert("Insufficient balance");
             return;
         }
-        
+
         resetGame();
         setLoading(true);
         try {
@@ -168,14 +169,14 @@ const MineGame: React.FC = () => {
                 setLoading(false);
                 return;
             }
-            
+
             // Then create the game
             const { data } = await axiosServices.post(`${MINE_API}/create`, {
                 mines: mineCount,
                 amount: betAmount,
                 walletAddress: address,
             });
-            
+
             if (data.status === "BET") {
                 // Initialize empty grid with 25 cells
                 const emptyGrid = Array.from({ length: 25 }, (_, index) => ({
@@ -238,7 +239,7 @@ const MineGame: React.FC = () => {
 
                 if (!hasBomb) {
                     // Won - add winnings
-                    const cashoutResult = await cashoutBalance(address, betAmount, profitAndOdds.probability);
+                    const cashoutResult = await cashoutBalance(address?.toString() || "", betAmount, profitAndOdds.probability);
                     if (cashoutResult.success) {
                         setResult({
                             odds: profitAndOdds.probability,
@@ -268,13 +269,13 @@ const MineGame: React.FC = () => {
         if (status !== GAME_STATUS.LIVE || loading || mineAreas.length === 0)
             return;
         if (!address) return;
-            
+
         setLoading(true);
         try {
             // Calculate winnings based on current picks
             const multiplier = profitAndOdds.probability;
             const winnings = profitAndOdds.roundedWinAmount;
-            
+
             // Add winnings to balance using unified API
             const cashoutResult = await cashoutBalance(address, betAmount, multiplier);
             if (!cashoutResult.success) {
@@ -282,7 +283,7 @@ const MineGame: React.FC = () => {
                 setLoading(false);
                 return;
             }
-            
+
             // Then process game cashout
             const { data } = await axiosServices.post(`${MINE_API}/cashout`, {
                 walletAddress: address,
@@ -469,15 +470,15 @@ const MineGame: React.FC = () => {
 
     // Render mine count slider
     const renderMineCount = () => (
-        <div className="mt-2 flex flex-col">
-            <p className={`text-xs ${disabled ? "text-[#879097]" : "text-white"}`}>
+        <div className="mt-4 flex flex-col space-y-2">
+            <p className={`text-xs font-medium ${disabled ? "text-gray-400" : "text-gray-700"}`}>
                 Mines
             </p>
             <div
-                className={`flex items-center p-1.5 ${disabled ? "bg-[#172c38]" : "bg-[#0f212e]"
-                    } rounded-full border-[2px] border-[#2f4553] hover:border-[#557086]`}
+                className={`flex items-center px-4 py-3 ${disabled ? "bg-gray-50" : "bg-white"
+                    } rounded-xl border border-gray-200 hover:border-gray-400 transition-all duration-200 shadow-sm`}
             >
-                <div className="px-4 w-[10px] text-white">{mineCount}</div>
+                <div className="min-w-[20px] text-sm font-semibold text-black">{mineCount}</div>
                 <input
                     type="range"
                     min="1"
@@ -485,41 +486,35 @@ const MineGame: React.FC = () => {
                     disabled={disabled}
                     value={mineCount}
                     onChange={(e) => setMineCount(Number(e.target.value))}
-                    className="mx-2 w-full h-2 bg-[#879097] rounded-lg cursor-pointer "
+                    className="mx-4 w-full h-2 bg-gray-200 rounded-lg cursor-pointer accent-black"
                 />
-                <div className="px-4 text-white">24</div>
+                <div className="min-w-[20px] text-sm font-medium text-gray-400">24</div>
             </div>
         </div>
     );
 
     // Render mine status fields
     const renderMineStatus = () => (
-        <div className="mt-2 w-[100%]">
-            <div style={{ display: "grid" }}>
-                <div className="pr-2 flex flex-col" style={{ gridRow: 1 }}>
-                    <p
-                        className={`text-sm w-full ${disabled ? "text-[#879097]" : "text-white"
-                            }`}
-                    >
+        <div className="mt-4 w-full space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col space-y-2">
+                    <p className="text-xs font-medium text-gray-700">
                         Mines
                     </p>
                     <input
                         value={mineCount}
                         disabled
-                        className="bg-[#2f4553] text-white  border-[2px] border-[#2f4553] hover:border-[#557086] rounded w-full p-1.5 text-sm"
+                        className="bg-gray-50 text-gray-900 font-medium border border-gray-200 rounded-lg w-full px-3 py-2.5 text-sm shadow-sm"
                     />
                 </div>
-                <div className="pl-2 flex flex-col" style={{ gridRow: 1 }}>
-                    <p
-                        className={`text-sm w-full ${disabled ? "text-[#879097]" : "text-white"
-                            }`}
-                    >
-                        Games
+                <div className="flex flex-col space-y-2">
+                    <p className="text-xs font-medium text-gray-700">
+                        Gems
                     </p>
                     <input
                         value={25 - mineCount - mineAreas.length}
                         disabled
-                        className="bg-[#2f4553] text-white  border-[2px] border-[#2f4553] hover:border-[#557086] rounded w-full p-1.5 text-sm"
+                        className="bg-gray-50 text-gray-900 font-medium border border-gray-200 rounded-lg w-full px-3 py-2.5 text-sm shadow-sm"
                     />
                 </div>
             </div>
@@ -528,12 +523,12 @@ const MineGame: React.FC = () => {
 
     // Render pick random tile button
     const renderRandomPickBtn = () => (
-        <div className="mt-3 w-full">
+        <div className="mt-4 w-full">
             <Button
                 onClick={randomBet}
-                className=" w-full  font-bold py-2 px-4 rounded-full"
+                className="w-full font-semibold py-3 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-200 shadow-sm transition-all duration-200"
             >
-                Pick random tile
+                Pick Random Tile
             </Button>
         </div>
     );
@@ -543,7 +538,7 @@ const MineGame: React.FC = () => {
         const disabledbtn =
             (!isAuto && loading) || (isAuto && autoAreas.length == 0);
         return (
-            <div className="mt-3 w-full">
+            <div className="mt-5 w-full">
                 <Button
                     disabled={disabledbtn}
                     onClick={() => {
@@ -565,10 +560,10 @@ const MineGame: React.FC = () => {
                             }
                         }
                     }}
-                    className={`${disabledbtn ? "bg-[#178317]" : "bg-[#00e701] hover:bg-[#00d600]"
-                        } text-black font-bold py-2 px-4 rounded-full w-full flex  justify-center text-center`}
+                    className={`${disabledbtn ? "bg-gray-200" : "bg-black hover:bg-gray-900"
+                        } ${disabledbtn ? "text-gray-400" : "text-white"} font-bold py-3.5 px-6 rounded-xl w-full flex justify-center text-center transition-all duration-200 shadow-lg hover:shadow-xl disabled:shadow-none`}
                 >
-                    <div className="flex text-nowrap">
+                    <div className="flex items-center gap-2 text-nowrap">
                         {status === GAME_STATUS.LIVE
                             ? isAuto
                                 ? "Stop Autobet"
@@ -577,7 +572,7 @@ const MineGame: React.FC = () => {
                                 ? "Start AutoBet"
                                 : "BET"}
                         {loading && (
-                            <div className="h-6 flex w-full items-center justify-center animate-zoom p-1">
+                            <div className="h-5 flex items-center justify-center animate-spin">
                                 <BombSvg />
                             </div>
                         )}
@@ -588,13 +583,13 @@ const MineGame: React.FC = () => {
     };
 
     const renderStopProfitAmount = () => (
-        <div className="mt-2">
-            <p className={`text-sm ${disabled ? "text-[#879097]" : "text-white"}`}>
+        <div className="mt-4 space-y-2">
+            <p className={`text-xs font-medium ${disabled ? "text-gray-400" : "text-gray-700"}`}>
                 Stop on Profit
             </p>
             <div
-                className={`flex w-full items-center  border-[2px] border-[#2f4553] hover:border-[#557086] ${disabled ? "bg-[#172c38]" : "bg-[#0f212e]"
-                    } rounded-full p-1.5`}
+                className={`flex w-full items-center border border-gray-200 hover:border-gray-400 ${disabled ? "bg-gray-50" : "bg-white"
+                    } rounded-xl px-4 py-3 transition-all duration-200 shadow-sm`}
             >
                 <input
                     disabled={disabled}
@@ -602,10 +597,11 @@ const MineGame: React.FC = () => {
                     min={0}
                     value={stopProfitA}
                     onChange={(e: any) => setStopProfitA(Number(e.target.value))}
-                    className={`${disabled ? "bg-[#172c38]" : "bg-[#0f212e]"
-                        } text-white  w-[90%] flex-1 text-sm focus:outline-none`}
+                    placeholder="0.00"
+                    className={`${disabled ? "bg-gray-50" : "bg-white"
+                        } text-gray-900 font-medium w-full flex-1 text-sm focus:outline-none`}
                 />
-                <div className="w-5">
+                <div className="w-5 ml-2">
                     <EthSvg />
                 </div>
             </div>
@@ -613,13 +609,13 @@ const MineGame: React.FC = () => {
     );
 
     const renderStopLossAmount = () => (
-        <div className="mt-2">
-            <p className={`text-sm ${disabled ? "text-[#879097]" : "text-white"}`}>
+        <div className="mt-4 space-y-2">
+            <p className={`text-xs font-medium ${disabled ? "text-gray-400" : "text-gray-700"}`}>
                 Stop on Loss
             </p>
             <div
-                className={`flex w-full items-center  border-[2px] border-[#2f4553] hover:border-[#557086] ${disabled ? "bg-[#172c38]" : "bg-[#0f212e]"
-                    } rounded-full p-1.5`}
+                className={`flex w-full items-center border border-gray-200 hover:border-gray-400 ${disabled ? "bg-gray-50" : "bg-white"
+                    } rounded-xl px-4 py-3 transition-all duration-200 shadow-sm`}
             >
                 <input
                     disabled={disabled}
@@ -627,10 +623,11 @@ const MineGame: React.FC = () => {
                     min={0}
                     onChange={(e: any) => setStopLossA(Number(e.target.value))}
                     value={stopLossA}
-                    className={`${disabled ? "bg-[#172c38]" : "bg-[#0f212e]"
-                        } text-white  w-[90%] flex-1 text-sm focus:outline-none`}
+                    placeholder="0.00"
+                    className={`${disabled ? "bg-gray-50" : "bg-white"
+                        } text-gray-900 font-medium w-full flex-1 text-sm focus:outline-none`}
                 />
-                <div className="w-5">
+                <div className="w-5 ml-2">
                     <EthSvg />
                 </div>
             </div>
@@ -650,7 +647,7 @@ const MineGame: React.FC = () => {
                             className={`${isMobile ? "w-11/12" : "w-[500px] xl:w-[630px]  p-5"} mx-auto relative`}
                         >
                             <div
-                                className={`grid grid-cols-5 gap-2.5 p-1.5 ${!areaFlag ? "animate-bounding2" : ""
+                                className={`grid grid-cols-5 gap-2 p-1.5 ${!areaFlag ? "animate-bounding" : ""
                                     } `}>
                                 {[...Array(25)].map((_, index) => {
                                     const mine = mineAreas.find((m) => m.point == index);
@@ -658,9 +655,13 @@ const MineGame: React.FC = () => {
                                         ? autoAreas.findIndex((m) => m.point == index) !== -1
                                         : false;
                                     return (
-                                        <div
+                                        <motion.div
                                             key={index}
-                                            className={`overflow-hidden max-h-[126px] ${mineAreas.length == 0 ? "animate-zoomIn" : ""
+                                            whileHover={{
+                                                x: -1,
+                                                y: -1,
+                                            }}
+                                            className={`overflow-hidden hover:shadow-lg max-h-[126px] ${mineAreas.length == 0 ? "animate-zoomIn" : ""
                                                 } `}
                                         >
                                             <MineButton
@@ -669,7 +670,7 @@ const MineGame: React.FC = () => {
                                                 isAuto={auto}
                                                 onClick={isAuto ? selectArea : placeBet}
                                             />
-                                        </div>
+                                        </motion.div>
                                     );
                                 })}
                             </div>
@@ -684,10 +685,10 @@ const MineGame: React.FC = () => {
                         </div>
                     </div>
                     {!isMobile && (
-                        <div className={`xl:w-[300px]  bg-black/20 p-2 flex-shrink-0`}>
-                            {address && <div className="mb-4"><GameBalanceDisplay /></div>}
+                        <div className="xl:w-[340px] bg-white border-l border-gray-200 p-6 flex-shrink-0 shadow-sm">
+                            {address && <div className="mb-6 pb-5 border-b border-gray-100"><GameBalanceDisplay /></div>}
                             {isAuto ? (
-                                <div className="flex flex-col">
+                                <div className="flex flex-col space-y-1">
                                     <SwitchTab onChange={handleTabChange} active={activeTab} disabled={disabled} />
                                     <AmountInput value={betAmount} onChange={handleAmountChange} disabled={disabled} />
                                     {renderMineCount()}
@@ -713,7 +714,7 @@ const MineGame: React.FC = () => {
                                     {renderBetBtn()}
                                 </div>
                             ) : (
-                                <div className="flex flex-col">
+                                <div className="flex flex-col space-y-1">
                                     <SwitchTab onChange={handleTabChange} active={activeTab} disabled={disabled} />
                                     <AmountInput value={betAmount} onChange={handleAmountChange} disabled={disabled} />
 
@@ -735,7 +736,7 @@ const MineGame: React.FC = () => {
 
                     {isMobile &&
                         (isAuto ? (
-                            <div className="w-11/12 bg-black/20 p-2">
+                            <div className="w-11/12 bg-gray-300 border border-gray-200 rounded-2xl p-5 mt-4 shadow-lg">
                                 {address && <GameBalanceDisplay />}
                                 {renderBetBtn()}
                                 <AmountInput value={betAmount} onChange={handleAmountChange} disabled={disabled} />
@@ -762,7 +763,7 @@ const MineGame: React.FC = () => {
                                 <SwitchTab onChange={handleTabChange} active={activeTab} disabled={disabled} />
                             </div>
                         ) : (
-                            <div className="w-11/12 bg-black/20 p-2">
+                            <div className="w-11/12 bg-gray-300 border border-gray-200 rounded-2xl p-5 mt-4 shadow-lg">
                                 {address && <GameBalanceDisplay />}
                                 <AmountInput value={betAmount} onChange={handleAmountChange} disabled={disabled} />
                                 {renderBetBtn()}

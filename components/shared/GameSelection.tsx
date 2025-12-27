@@ -2,46 +2,54 @@
 import Link from 'next/link'
 import React from 'react'
 import Card from '@/components/games/VideoPoker/Cards/Card'
+import { CarouselDemo } from '../casinoHub/Carousel'
 
 export function GameSelection() {
   const games = [
     {
       name: "Mine",
       link: "/mine",
+      img: "/games/mines.png",
       background: "mine",
       desc: "Find Gem"
     },
     {
       name: "Crash",
       link: "/crash",
+      img: "/games/mines.png",
       background: "crash",
       desc: "Never stop!"
     },
     {
       name: "Slide",
       link: "/slide",
+      img: "/games/mines.png",
       background: "jackport",
       desc: "Anyhow, it stops"
     },
     {
       name: "Poker",
       link: "/videopoker",
+      img: "/games/mines.png",
       background: "poker",
       desc: "Poker king"
     },
   ]
 
   return (
-    <div className='min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4'>
+    <div className='min-h-screen w-full flex items-center justify-center'>
       <div className='w-full max-w-6xl'>
-        <div className='text-center mb-8'>
-          <h1 className='text-4xl font-bold text-white mb-2'>Status Mines</h1>
-          <p className='text-lg text-white/70'>Choose your game and start winning</p>
+        <div className='text-center mb-4'>
+          <h1 className='text-4xl font-bold text-black mb-2'>Status Mines</h1>
+          {/* <p className='text-lg text-black/70'>Choose your game and start winning</p> */}
         </div>
+        <CarouselDemo />
 
-        <div className='grid grid-cols-1 sm:grid-cols-2 gap-8 w-full max-w-4xl mx-auto'>
+        <div className='grid grid-cols-2 gap-4 p-2'>
           {games.map((game, idx) => (
-            <Card {...game} key={idx} />
+            <Link href={game.link} className='w-full h-[20vh] bg-green-300 overflow-hidden rounded-xl' key={idx}>
+              <div className='w-full h-full bg-cover bg-center' style={{ backgroundImage: `url(${game.img})` }}></div>
+            </Link>
           ))}
         </div>
 

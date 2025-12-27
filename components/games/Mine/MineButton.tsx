@@ -73,10 +73,10 @@ const MineButton = ({ point, mine, isAuto, onClick }: MineButtonProps) => {
     <Button
       className={
         mine?.mine
-          ? `p-2 w-full h-full rounded-lg aspect-square bg-white/20 ${isAuto && "border-[5px] border-[#9000ff]"}`
+          ? `p-2 w-full h-full rounded-lg aspect-square bg-white/20 hover:bg-white/20 ${isAuto && "border-[5px] border-[#9000ff]"}`
           : mine
-            ? `p-2 animate-bounding1 w-full h-full rounded-lg aspect-square ${isAuto ? "bg-[#9000ff]" : "bg-white/20"}`
-            : `p-2 w-full h-full rounded-lg aspect-square ${isAuto ? "bg-[#9000ff]" : "bg-white/20"}`
+            ? `p-2 animate-bounding1 w-full h-full rounded-lg aspect-square ${isAuto ? "bg-[#9000ff] hover:bg-[#9000ff]" : "bg-white/20 hover:bg-white/20"}`
+            : `p-2 w-full h-full rounded-lg aspect-square ${isAuto ? "bg-[#9000ff] hover:bg-[#9000ff]" : "bg-white/20 hover:bg-white/20"}`
       }
       onClick={handleClick}
     >
