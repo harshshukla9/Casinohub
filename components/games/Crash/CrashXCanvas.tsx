@@ -505,7 +505,7 @@ const GameCanvas = (infos: any) => {
                 width: "100%",
                 height: "100%",
                 backgroundImage:
-                    "linear-gradient(227deg, #0e3b69f0, rgb(0, 0, 0))",
+                    "",
             }}
         />
     );

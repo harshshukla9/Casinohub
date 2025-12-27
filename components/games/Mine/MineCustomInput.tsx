@@ -24,40 +24,41 @@ const MineCustomInput = ({
     else onChange(inputValue);
   }, [visible, inputValue]);
   return (
-    <div className="mt-2 flex flex-col">
+    <div className="mt-4 flex flex-col space-y-2">
       {label && (
-        <p className={`text-sm ${disabled ? "text-[#879097]" : "text-white"}`}>
+        <p className={`text-xs font-medium ${disabled ? "text-gray-400" : "text-gray-700"}`}>
           {label}
         </p>
       )}
-      <div className="flex bg-[#2f4553] overflow-hidden p-[1px] rounded-full">
+      <div className="flex bg-gray-100 overflow-hidden p-1 rounded-xl border border-gray-200 shadow-sm">
         <button
-          className={`px-2 text-[#879097] rounded-l-full focus:outline-none rounded-md text-[.75rem] hover:bg-[#557086] ${visible == false && "bg-[#0f212e]"
-            }`}
+          className={`px-3 py-2 text-gray-700 rounded-lg focus:outline-none text-xs font-medium transition-all duration-200 ${visible == false && "bg-white shadow-sm text-black"
+            } ${!disabled && "hover:bg-gray-50"}`}
           onClick={() => !disabled && setVisible(false)}
         >
-          Rest
+          Reset
         </button>
         <button
           onClick={() => !disabled && setVisible(true)}
-          className={`px-2 text-[#879097] focus:outline-none  rounded-md text-[.75rem] text-nowrap hover:bg-[#557086] ${visible && "bg-[#0f212e]"
-            }`}
+          className={`px-3 py-2 text-gray-700 focus:outline-none rounded-lg text-xs font-medium text-nowrap transition-all duration-200 ${visible && "bg-white shadow-sm text-black"
+            } ${!disabled && "hover:bg-gray-50"}`}
         >
           Increase By:
         </button>
         <div
-          className={`flex ${!visible || disabled ? "bg-[#172c38]" : "bg-[#0f212e]"
-            }  rounded-r-full border-[#2f4553] hover:border-[#557086] w-full`}
+          className={`flex ${!visible || disabled ? "bg-gray-50" : "bg-white"
+            } rounded-r-lg border-l border-gray-200 w-full`}
         >
           <input
             type="number"
             value={visible ? inputValue : value}
             min={0}
             disabled={disabled || !visible}
+            placeholder="0"
             onChange={(e) => handleChange(Number(e.target.value))}
-            className=" px-3 py-1 text-white bg-[#0f212e00] w-[80%] focus:outline-none"
+            className="px-3 py-2 text-gray-900 font-medium bg-transparent w-full focus:outline-none text-sm"
           />
-          <div className="flex items-center justify-center pl-2 pr-1.5 w-[35px] ">
+          <div className="flex items-center justify-center pl-2 pr-3 w-[35px]">
             <PercentSvg />
           </div>
         </div>

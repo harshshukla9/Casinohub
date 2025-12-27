@@ -8,9 +8,9 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen w-full bg-black">
       <Header />
-      <div className="min-h-[calc(100vh-80px)] w-full">
+      <div className="min-h-[calc(100vh-80px)] text-black! w-full">
         {children}
       </div>
     </div>

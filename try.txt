@@ -1,0 +1,149 @@
+{isMobile && (
+                                <div className="p-5">
+                                    {address && <GameBalanceDisplay />}
+                                    {isAuto ? (
+                                        <Button
+                                            className="bg-black hover:bg-gray-900 text-white font-bold uppercase rounded-xl py-3.5 mb-4 shadow-lg transition-all duration-200"
+                                            disabled={
+                                                betting &&
+                                                gameState !== GAME_STATES.InProgress &&
+                                                !autoBetEnabled
+                                            }
+                                            onClick={() => {
+                                                if (!betting) {
+                                                    if (autoBetEnabled) {
+                                                        handleAutoBetChange(false);
+                                                    } else {
+                                                        clickBet();
+                                                        handleAutoBetChange(true);
+                                                    }
+                                                } else if (
+                                                    gameState === GAME_STATES.InProgress &&
+                                                    !cashedOut
+                                                ) {
+                                                    clickCashout();
+                                                } else if (autoBetEnabled) {
+                                                    handleAutoBetChange(false);
+                                                }
+                                            }}
+                                        >
+                                            {!betting
+                                                ? autoBetEnabled
+                                                    ? "Stop Autobet"
+                                                    : "Start Autobet"
+                                                : gameState === GAME_STATES.InProgress && !cashedOut
+                                                    ? "CASHOUT"
+                                                    : autoBetEnabled
+                                                        ? "Stop Autobet"
+                                                        : "Finishing Bet"}
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            type="button"
+                                            className="bg-black hover:bg-gray-900 text-white font-bold uppercase rounded-xl py-3.5 mb-4 shadow-lg transition-all duration-200"
+                                            disabled={loading}
+                                            onClick={async (e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+
+                                                // Use ref to get CURRENT payout value (not stale closure value)
+                                                const currentPayout = payoutRef.current;
+                                                console.log("=== MOBILE BUTTON CLICKED ===", {
+                                                    currentPayout,
+                                                    payoutState: payout,
+                                                    betting,
+                                                    gameState,
+                                                    cashedOut,
+                                                    loading,
+                                                    betAmount
+                                                });
+
+                                                if (loading) {
+                                                    console.log("✗ Loading, please wait...");
+                                                    return;
+                                                }
+
+                                                // ALWAYS allow cashout if payout > 1 - user sees it on screen!
+                                                if (currentPayout > 1) {
+                                                    console.log("🚀 CASHOUT NOW (mobile)! Payout:", currentPayout);
+                                                    await clickCashout();
+                                                } else {
+                                                    console.log("📍 Placing bet (mobile), payout is:", currentPayout);
+                                                    clickBet();
+                                                }
+                                            }}
+                                        >
+                                            {!betting
+                                                ? joining
+                                                    ? "BETTING..."
+                                                    : plannedBet
+                                                        ? "CANCEL BET"
+                                                        : "Place Bet (next round)"
+                                                : cashedOut
+                                                    ? "CASHED OUT"
+                                                    : "CASHOUT"}
+                                        </Button>
+                                    )}
+                                    {(!isAuto || subActiveTab !== 1) && (
+                                        <>
+                                            <AmountInput
+                                                disabled={disabled}
+                                                value={betAmount}
+                                                onChange={setBetAmount}
+                                            />
+                                            <MultiPlierInput
+                                                disabled={disabled}
+                                                value={target}
+                                                onChange={onTargetChange}
+                                            />
+                                        </>
+                                    )}
+                                    {(!isAuto || subActiveTab === 1) && (
+                                        <CurrentBets bets={players} />
+                                    )}
+                                    {isAuto && subActiveTab !== 1 && (
+                                        <>
+                                            <BetNumberInput
+                                                disabled={disabled}
+                                                value={autoBetCount}
+                                                onChange={setAutoCount}
+                                                Icon={<SelectedPaymentIcon currency={currency} />}
+                                            />
+                                            <StopProfitAmount
+                                                disabled={disabled}
+                                                Label={"Stop on Profit"}
+                                                onChange={setStopPorfitA}
+                                                value={stopProfitA}
+                                                Icon={<SelectedPaymentIcon currency={currency} />}
+                                            />
+                                            <StopProfitAmount
+                                                disabled={disabled}
+                                                Label={"Loss on Profit"}
+                                                onChange={setStopLossA}
+                                                value={stopLossA}
+                                                Icon={<SelectedPaymentIcon currency={currency} />}
+                                            />
+                                        </>
+                                    )}
+                                    <ProfitAmount
+                                        multiplier={payout}
+                                        disabled={true}
+                                        profit={payout * savebetAmount}
+                                        icon={<SelectedPaymentIcon currency={currency} />}
+                                    />
+                                    {isAuto && (
+                                        <SwitchTab
+                                            onChange={setSubActiveTab}
+                                            disabled={false}
+                                            active={subActiveTab}
+                                            options={["Controls", "Leaderboard"]}
+                                            type={"sub"}
+                                        />
+                                    )}
+                                    <SwitchTab
+                                        onChange={setActiveTab}
+                                        disabled={disabled}
+                                        active={activeTab}
+                                    />
+                                </div>
+                            )}

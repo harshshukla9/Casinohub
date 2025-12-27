@@ -4,29 +4,29 @@ import Input from "./Input";
 type props = { onChange: Function, disabled?: boolean, value: number };
 
 const MultiPlierInput: React.FC<props> = ({ onChange, disabled, value }) => {
-    return <div className="mt-2 flex flex-col">
-        <p className={`text-sm ${disabled ? "text-text_1" : "text-[#bdbcbc]"}  font-bold`}>
+    return <div className="mt-4 flex flex-col space-y-2">
+        <p className={`text-xs font-medium ${disabled ? "text-gray-400" : "text-gray-700"}`}>
             Target Multiplier (Optional)
         </p>
-        <div className="flex bg-input_bg rounded overflow-hidden shadow-input">
-            <Input onChange={onChange} value={value} disabled={disabled} />
-            <div className="relative flex">
+        <div className="flex bg-white rounded-xl overflow-hidden border border-gray-200 hover:border-gray-400 transition-all duration-200 shadow-sm">
+            <Input onChange={onChange} value={value} disabled={disabled} className="text-black" />
+            <div className="relative flex border-l border-gray-200">
                 <button
                     disabled={disabled}
                     onClick={() =>
                         onChange((value / 2).toFixed(2) || "0")
                     }
-                    className={`px-2 text-text_1 w-8 focus:outline-none ${disabled ? "cursor-not-allowed" : "hover:bg-input_hover active:scale-90 transform"}`}
+                    className={`px-4 py-3 text-gray-700 font-medium w-10 focus:outline-none ${disabled ? "cursor-not-allowed opacity-50" : "hover:bg-gray-50 active:bg-gray-100 active:scale-95 transform transition-transform"}`}
                 >
                     <DownSvg />
                 </button>
-                <div className="absolute w-[2px] bg-panel left-[50%] top-[20%] bottom-[25%]  transform -translate-x-1/2" />
+                <div className="absolute w-px bg-gray-200 left-1/2 top-[20%] bottom-[20%] transform -translate-x-1/2" />
                 <button
                     onClick={() =>
                         onChange((value * 2).toFixed(2) || "0")
                     }
                     disabled={disabled}
-                    className={`px-2 text-text_1 w-8 focus:outline-none ${disabled ? "cursor-not-allowed" : "hover:bg-input_hover  active:scale-90 transform"}`}
+                    className={`px-4 py-3 text-gray-700 font-medium w-10 focus:outline-none ${disabled ? "cursor-not-allowed opacity-50" : "hover:bg-gray-50 active:bg-gray-100 active:scale-95 transform transition-transform"}`}
                 >
                     <UpSvg />
                 </button>
