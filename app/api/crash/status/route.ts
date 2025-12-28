@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import User from '@/lib/user';
-import { activeGames } from '../create/route';
+import { activeGames, getGameByWallet, listGames } from '../gamestore';
 
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
-    const { walletAddress } = await request.json();
+    const { walletAddress, action } = await request.json();
 
     if (!walletAddress) {
       return NextResponse.json({ error: 'Wallet address required' }, { status: 400 });
@@ -20,14 +20,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    console.log('=== STATUS API CALLED ===', { walletAddress: normalizedWalletAddress, action });
+    listGames();
+
     // Find active game
     for (const [gameId, game] of activeGames.entries()) {
       if (game.walletAddress === normalizedWalletAddress) {
         let currentMultiplier = 1.00;
         
+        console.log('Found game for status:', { gameId, status: game.status });
+        
+        // If action is 'start' or game is waiting and this is called, START the game
         if (game.status === 'waiting') {
-          // Game hasn't started yet
+          // Start the game now!
+          game.status = 'running';
+          game.startedAt = Date.now();
           currentMultiplier = 1.00;
+          console.log('Game started:', { gameId, startedAt: game.startedAt, newStatus: game.status });
         } else if (game.status === 'running') {
           // Calculate current multiplier based on elapsed time
           if (game.startedAt === 0) {

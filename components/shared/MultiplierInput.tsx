@@ -1,12 +1,12 @@
 import React from "react";
 import Input from "./Input";
 
-type props = { onChange: Function, disabled?: boolean, value: number };
+type props = { onChange: Function, disabled?: boolean, value: number, required?: boolean, label?: string };
 
-const MultiPlierInput: React.FC<props> = ({ onChange, disabled, value }) => {
+const MultiPlierInput: React.FC<props> = ({ onChange, disabled, value, required = false, label }) => {
     return <div className="mt-4 flex flex-col space-y-2">
         <p className={`text-xs font-medium ${disabled ? "text-gray-400" : "text-gray-700"}`}>
-            Target Multiplier (Optional)
+            {label || `Target Multiplier${required ? " *" : " (Optional)"}`}
         </p>
         <div className="flex bg-white rounded-xl overflow-hidden border border-gray-200 hover:border-gray-400 transition-all duration-200 shadow-sm">
             <Input onChange={onChange} value={value} disabled={disabled} className="text-black" />

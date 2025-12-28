@@ -1,18 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import User from '@/lib/user';
-
-// In-memory storage for active games
-const activeGames = new Map<string, {
-  walletAddress: string;
-  betAmount: number;
-  target: number;
-  crashPoint: number; // The multiplier where it will crash
-  currentMultiplier: number;
-  gameId: string;
-  startedAt: number;
-  status: 'waiting' | 'running' | 'crashed' | 'cashed_out';
-}>();
+import { activeGames, createGame, listGames, CrashGame } from '../gamestore';
 
 // Generate random crash point between 1.00x and 100x
 function generateCrashPoint(): number {
@@ -61,7 +50,7 @@ export async function POST(request: NextRequest) {
     const crashPoint = generateCrashPoint();
     const gameId = `${normalizedWalletAddress}_${Date.now()}`;
 
-    const gameData = {
+    const gameData: CrashGame = {
       walletAddress: normalizedWalletAddress,
       betAmount,
       target: targetValue * 100, // Convert to percentage (e.g., 5x = 500), 0 means no target
@@ -69,10 +58,11 @@ export async function POST(request: NextRequest) {
       currentMultiplier: 1.00,
       gameId,
       startedAt: 0, // Will be set when game starts
-      status: 'waiting' as const,
+      status: 'waiting',
     };
 
-    activeGames.set(gameId, gameData);
+    createGame(gameId, gameData);
+    listGames(); // Debug: show all games
 
     console.log('Crash game created:', { gameId, betAmount, target, crashPoint });
 
@@ -91,7 +81,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-// Export for use in other routes
-export { activeGames };
 

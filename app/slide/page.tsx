@@ -84,15 +84,16 @@ const SlideGame = () => {
 
     const [activeTab, setActiveTab] = useState<number>(0);
     const [betAmount, setBetAmount] = useState<number>(0);
-    const [target, setTarget] = useState<number>(0);
+    const [target, setTarget] = useState<number>(2); // Default target 2x (mandatory)
     const betCount = useRef<number>(0);
     const [autobet, setAutobet] = useState<boolean>(false);
     const [bets, setBets] = useState<any[]>([]);
 
     const [history, setHistory] = useState<any[]>([]);
 
+    // Initial numbers include low multipliers (0.0, 0.3, 0.5, 0.8) for more excitement!
     const [result, setResult] = useState({
-        numbers: [1.903584107931594, 7.289733272636531, 1.3637520028046712, 2.1687325855871227, 2.4933819106663493, 1.498308102164589, 1.4985860487052827, 21.750156733109126, 1.0372314374834941, 4.866700181583145, 1.3724955280886675, 6.029560018920336, 1.0303612131867523, 1.790765019475776, 1.0509659303212602, 1.3427846331361688, 1.043602614826846, 1, 1.7554225649186417, 1.9452640717656329, 1.9146219934302606, 4.869526482116821, 1.6029811093702553, 1.2435240630267617, 17.437289699821303, 1.276313397368619, 1.618755824614112, 9.886094186702175, 1.5709471875430103, 1.0521788401854846, 1.3911934025482007, 1.3252738435995668, 1.906647723872426, 1.090347584906667, 1.2848101589784566, 1.007087172210973, 11.548618542693777, 1.3578319475086218, 4.639070394589904, 1.8465654390716766, 2.653733488076682, 4.923510038032103, 4.921580919662703, 1.3178708730473734, 1.7319504108869979, 1.511790731631906, 1.415210820644928, 5.80904104812333, 1.1317336828287066, 1.322065143934753, 7.242526244532375, 2.5955453056761604, 1.168085793132742, 3.2424142021519637, 6.723184381982699, 10.76300946407673, 1.3864677993193353, 1.550989717093865, 1.0660077023468517, 3.363056173638654, 2.679747580002418, 4.034726347339524, 5.715358587221796, 21.046970995887037, 2.593111595629966, 1.3907866095722856, 8.08699725169305, 2.3378138615475215, 1.8070323153254058, 1.9535634982554118, 7.573343939658181, 1.253450763655036, 8.003569610632168, 2.5789112031547177, 2.7480245233718996, 2.2153270662421325, 1.7588492912318467, 1.310647410959055, 2.629692012488445, 1.7299793236036611, 2.671240918732696, 18.872152846456686, 1.0117321367489212, 5.7415093107764905, 5.9960418900001295, 1.8347721783099589, 1.027356841602837, 75.45281444815788, 1.646594016671491, 1.337322225052752],
+        numbers: [0.0, 1.95, 0.5, 2.16, 0.3, 1.49, 0.8, 21.75, 0.0, 4.86, 1.37, 0.15, 1.03, 1.79, 0.0, 1.34, 0.65, 1, 1.75, 0.45, 1.91, 4.86, 0.0, 1.24, 17.43, 0.28, 1.61, 9.88, 0.55, 1.05, 0.0, 1.32, 1.9, 0.89, 1.28, 0.0, 11.54, 1.35, 4.63, 0.75, 2.65, 0.0, 4.92, 1.31, 0.4, 1.51, 0.0, 5.8],
         multiplier: 1
     });
 
@@ -125,6 +126,12 @@ const SlideGame = () => {
         if (Number(betAmount) <= 0) {
             setAmountInputFlag(false);
             alert("Please input your bet amount!");
+            return;
+        }
+
+        // Target multiplier is MANDATORY
+        if (!target || target <= 0) {
+            alert("Please select a target multiplier! (e.g., 2x, 3x, 5x)");
             return;
         }
 
@@ -384,7 +391,7 @@ const SlideGame = () => {
                                 {getButtonContent()}
                             </Button>
                             <AmountInput onChange={setBetAmount} value={betAmount} disabled={disable} />
-                            <MultiPlierInput onChange={setTarget} value={target} disabled={disable} />
+                            <MultiPlierInput onChange={setTarget} value={target} disabled={disable} required={true} label="Target Multiplier *" />
                             <SwitchTab onChange={setActiveTab} active={activeTab} disabled={disable} />
                         </div>
                     ) : (
@@ -392,7 +399,7 @@ const SlideGame = () => {
                             {address && <div className="mb-4 pb-4 border-b border-gray-100"><GameBalanceDisplay /></div>}
                             <SwitchTab onChange={setActiveTab} active={activeTab} disabled={disable} />
                             <AmountInput onChange={setBetAmount} value={betAmount} disabled={disable} />
-                            <MultiPlierInput onChange={setTarget} value={target} disabled={disable} />
+                            <MultiPlierInput onChange={setTarget} value={target} disabled={disable} required={true} label="Target Multiplier *" />
                             <Button
                                 className="bg-black hover:bg-gray-900 text-white font-bold uppercase rounded-xl py-3.5 shadow-md hover:shadow-lg transition-all duration-200"
                                 disabled={disable || status === STATUS.STARTING}

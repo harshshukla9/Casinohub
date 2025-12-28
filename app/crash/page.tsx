@@ -72,6 +72,7 @@ const CrashGame = () => {
     const [crashed, setCrashed] = useState(false);
     const [betting, setBetting] = useState(false);
     const [cashedOut, setCashedOut] = useState(false);
+    const [cashedOutMultiplier, setCashedOutMultiplier] = useState(0); // Store the multiplier when cashed out
     const [loading, setLoading] = useState(false);
     const [history, setHistory] = useState<any[]>([]);
     const [verifyId, setGameVerifyId] = useState("");
@@ -95,6 +96,8 @@ const CrashGame = () => {
     const gameStartTimeRef = useRef<number>(0);
     const crashPointRef = useRef<number>(0);
     const payoutRef = useRef<number>(1); // Track current payout
+    const cashedOutRef = useRef<boolean>(false); // Track cashout status in interval
+    const cashedOutMultiplierRef = useRef<number>(0); // Track cashout multiplier in interval
 
 
     // Start new game
@@ -146,6 +149,9 @@ const CrashGame = () => {
                 setPayout(1);
                 setCrashed(false);
                 setCashedOut(false);
+                setCashedOutMultiplier(0); // Reset cashout multiplier for new game
+                cashedOutRef.current = false; // Reset ref
+                cashedOutMultiplierRef.current = 0; // Reset ref
                 setBetting(true);
                 setBetSaveAmount(betAmount);
 
@@ -191,12 +197,16 @@ const CrashGame = () => {
         const now = Date.now();
         gameStartTimeRef.current = now;
         setStartTime(now);
+        setLoading(false); // Enable cashout button
 
-        // Update game status on server to 'running'
+        // Update game status on server to 'running' - this is critical!
         try {
-            await axiosServices.post(`${CRASH_API}/status`, {
+            console.log("Starting game on server...");
+            const statusResponse = await axiosServices.post(`${CRASH_API}/status`, {
                 walletAddress: address,
+                action: 'start'
             });
+            console.log("Game started on server:", statusResponse.data);
         } catch (error) {
             console.error("Failed to update game status:", error);
         }
@@ -210,38 +220,27 @@ const CrashGame = () => {
             payoutRef.current = roundedPayout;
             setPayout(roundedPayout);
 
-            // Check if crashed
+            // Check if crashed - game continues even after cashout until crash
             if (currentMultiplier >= crashPointRef.current) {
-                endGame(false);
+                // Game crashed - end it now
+                if (gameIntervalRef.current) {
+                    clearInterval(gameIntervalRef.current);
+                    gameIntervalRef.current = null;
+                }
+                setGameState(GAME_STATES.Over);
+                setCrashed(true);
+                setBetting(false);
+                
+                // Add to history using refs for current values
+                const historyItem = {
+                    _id: gameId || `game_${Date.now()}`,
+                    crashPoint: crashPointRef.current,
+                    multiplier: cashedOutRef.current ? cashedOutMultiplierRef.current : crashPointRef.current,
+                    cashedOut: cashedOutRef.current,
+                };
+                setHistory(prev => [historyItem, ...prev.slice(0, 5)]);
             }
         }, 100);
-    };
-
-    const endGame = (didCashout: boolean) => {
-        if (gameIntervalRef.current) {
-            clearInterval(gameIntervalRef.current);
-            gameIntervalRef.current = null;
-        }
-
-        setGameState(GAME_STATES.Over);
-        setCrashed(!didCashout);
-        setBetting(false);
-
-        if (didCashout) {
-            setCashedOut(true);
-        } else {
-            // Player lost - balance already deducted
-            setCashedOut(false);
-        }
-
-        // Add to history
-        const historyItem = {
-            _id: gameId || `game_${Date.now()}`,
-            crashPoint: crashPointRef.current,
-            multiplier: payout,
-            cashedOut: didCashout,
-        };
-        setHistory(prev => [historyItem, ...prev.slice(0, 5)]);
     };
 
     // Switch to auto betting (simplified - not using socket)
@@ -249,7 +248,7 @@ const CrashGame = () => {
         // Auto betting can be implemented later if needed
     };
 
-    // Cashout
+    // Cashout - marks player as cashed out but game continues until crash
     const clickCashout = async () => {
         // Use ref to get CURRENT payout (not stale state)
         const currentPayout = payoutRef.current;
@@ -283,19 +282,17 @@ const CrashGame = () => {
 
         setLoading(true);
         try {
-            // Stop the interval first
-            if (gameIntervalRef.current) {
-                clearInterval(gameIntervalRef.current);
-                gameIntervalRef.current = null;
-            }
+            // DON'T stop the interval - let the game continue running!
+            // Just mark as cashed out and add winnings
 
             // Use current payout from ref as multiplier
             const currentMultiplier = currentPayout;
             console.log("Attempting cashout:", { currentMultiplier, betAmount, gameId });
 
-            // Call cashout API
+            // Call cashout API with current multiplier
             const response = await axiosServices.post(`${CRASH_API}/cashout`, {
                 walletAddress: address,
+                multiplier: currentMultiplier, // Send current multiplier to server
             });
 
             const cashoutData = response.data;
@@ -304,15 +301,22 @@ const CrashGame = () => {
             if (cashoutData && cashoutData.success) {
                 // Use multiplier from API response or current payout
                 const finalMultiplier = cashoutData.multiplier || currentMultiplier;
-                console.log("Cashout successful, adding winnings:", { finalMultiplier, betAmount });
+                // Use saved bet amount (the amount when bet was placed)
+                const betToUse = savebetAmount || betAmount;
+                console.log("Cashout successful, adding winnings:", { finalMultiplier, betToUse });
 
                 // Add winnings to balance
-                const cashoutResult = await cashoutBalance(address, betAmount, finalMultiplier);
+                const cashoutResult = await cashoutBalance(address, betToUse, finalMultiplier);
                 console.log("Cashout balance result:", cashoutResult);
 
                 if (cashoutResult.success) {
-                    endGame(true);
+                    // Mark as cashed out but DON'T end game - let it continue!
+                    setCashedOut(true);
+                    setCashedOutMultiplier(finalMultiplier);
+                    cashedOutRef.current = true; // Update ref for interval
+                    cashedOutMultiplierRef.current = finalMultiplier; // Update ref for interval
                     setLoading(false);
+                    console.log("✅ Cashed out at", finalMultiplier + "x", "- Game continues until crash at", crashPointRef.current + "x");
                 } else {
                     console.error("Cashout balance error:", cashoutResult);
                     alert(cashoutResult.error || "Failed to add winnings to balance");
@@ -677,7 +681,7 @@ const CrashGame = () => {
                                                             ? "CANCEL BET"
                                                             : "Place Bet (next round)"
                                                     : cashedOut
-                                                        ? "CASHED OUT"
+                                                        ? `CASHED OUT @ ${cashedOutMultiplier.toFixed(2)}x`
                                                         : "CASHOUT"}
                                             </Button>
                                         )}

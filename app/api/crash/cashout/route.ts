@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import User from '@/lib/user';
-import { activeGames } from '../create/route';
+import { activeGames, getActiveGameByWallet, deleteGame, listGames } from '../gamestore';
 
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
-    const { walletAddress } = await request.json();
+    const { walletAddress, multiplier: clientMultiplier } = await request.json();
+
+    console.log('=== CASHOUT API CALLED ===', { walletAddress, clientMultiplier });
 
     if (!walletAddress) {
       return NextResponse.json({ error: 'Wallet address required' }, { status: 400 });
@@ -17,61 +19,66 @@ export async function POST(request: NextRequest) {
     // Find user
     const user = await User.findOne({ walletAddress: normalizedWalletAddress });
     if (!user) {
+      console.log('User not found:', normalizedWalletAddress);
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Find active game
-    let currentGame: any = null;
-    let gameId: string = '';
+    // Debug: List all games
+    listGames();
 
-    for (const [gid, game] of activeGames.entries()) {
-      if (game.walletAddress === normalizedWalletAddress) {
-        // Allow cashout if game is running or waiting (game might have started on frontend)
-        if (game.status === 'running' || game.status === 'waiting') {
-          currentGame = game;
-          gameId = gid;
-          break;
-        }
-      }
-    }
+    // Find active game using helper
+    const foundGame = getActiveGameByWallet(normalizedWalletAddress);
 
-    if (!currentGame) {
+    if (!foundGame) {
+      console.log('No active game found for wallet:', normalizedWalletAddress);
       return NextResponse.json({ error: 'No active game to cashout' }, { status: 400 });
     }
 
-    // If game is waiting but has startedAt set, update status to running
-    if (currentGame.status === 'waiting' && currentGame.startedAt > 0) {
-      currentGame.status = 'running';
-    }
+    const { gameId, game: currentGame } = foundGame;
+    console.log('Found game:', { gameId, status: currentGame.status, startedAt: currentGame.startedAt });
 
     // Calculate current multiplier based on elapsed time
     let currentMultiplier = 1.00;
-    if (currentGame.status === 'running') {
-      if (currentGame.startedAt > 0) {
-        const elapsed = (Date.now() - currentGame.startedAt) / 1000;
-        currentMultiplier = Math.min(1.00 + (elapsed * 0.1), currentGame.crashPoint);
+    
+    if (currentGame.status === 'running' && currentGame.startedAt > 0) {
+      const elapsed = (Date.now() - currentGame.startedAt) / 1000;
+      currentMultiplier = Math.min(1.00 + (elapsed * 0.1), currentGame.crashPoint);
+    } else if (currentGame.status === 'waiting') {
+      // If game is waiting, use client multiplier if provided, otherwise use 1.0
+      // This handles the case where the frontend started the game but didn't update server status
+      if (clientMultiplier && clientMultiplier > 1) {
+        currentMultiplier = Math.min(clientMultiplier, currentGame.crashPoint);
+        console.log('Using client multiplier:', clientMultiplier);
       } else {
-        // Game just started but startedAt not set, set it now
+        // Start the game now and use minimum multiplier
         currentGame.startedAt = Date.now();
         currentGame.status = 'running';
-        currentMultiplier = 1.00;
+        currentMultiplier = 1.01; // Give them at least 1.01x
+        console.log('Game was waiting, starting now with 1.01x');
       }
-    } else if (currentGame.status === 'waiting') {
-      // Game hasn't started yet, can't cashout
-      return NextResponse.json({ error: 'Game has not started yet' }, { status: 400 });
     }
+
+    // Ensure multiplier doesn't exceed crash point
+    if (currentMultiplier > currentGame.crashPoint) {
+      currentMultiplier = currentGame.crashPoint;
+    }
+
+    console.log('Final multiplier:', currentMultiplier, 'Crash point:', currentGame.crashPoint);
 
     // Mark as cashed out
     currentGame.status = 'cashed_out';
     currentGame.currentMultiplier = currentMultiplier;
 
-    // Remove game
-    activeGames.delete(gameId);
+    // Remove game using helper
+    deleteGame(gameId);
+
+    const winnings = currentGame.betAmount * currentMultiplier;
+    console.log('Cashout successful:', { multiplier: currentMultiplier, winnings, betAmount: currentGame.betAmount });
 
     return NextResponse.json({
       success: true,
       multiplier: Math.round(currentMultiplier * 100) / 100,
-      winnings: currentGame.betAmount * currentMultiplier,
+      winnings: winnings,
       status: 'cashed_out',
     });
 

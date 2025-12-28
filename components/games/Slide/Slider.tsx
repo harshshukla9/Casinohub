@@ -131,7 +131,8 @@ const Slider: React.FC<SliderProps> = ({ multiplier, elapsedTime, numbers = [] }
             hasSliderRef: !!sliderRef.current 
         });
 
-        if (sliderRef.current && targetCardIndex !== -1 && multiplier > 1) {
+        // Changed from > 1 to >= 0 to handle low multipliers (0.0, 0.3, 0.5, 0.8, etc.)
+        if (sliderRef.current && targetCardIndex !== -1 && multiplier >= 0) {
 
             const slider = sliderRef.current;
             
@@ -277,7 +278,8 @@ export const findTile = (number: number): any => {
 
     const colors = [
         {
-            color: "#2d4454",
+            // RED - Very dangerous! 0.0x - 0.5x (lose most/all of bet)
+            color: "#ff3b3b",
             text: "white",
             point: 0,
             hex: getImage("hex-dark"),
@@ -286,6 +288,27 @@ export const findTile = (number: number): any => {
             audio: getAudio("hex-dark")
         },
         {
+            // DARK RED - Low 0.5x - 1.0x (lose some of bet)
+            color: "#b83232",
+            text: "white",
+            point: 0.5,
+            hex: getImage("hex-dark"),
+            w: 11,
+            h: 3,
+            audio: getAudio("hex-dark")
+        },
+        {
+            // DARK - 1.0x - 2.0x (break even or small win)
+            color: "#2d4454",
+            text: "white",
+            point: 1,
+            hex: getImage("hex-dark"),
+            w: 11,
+            h: 3,
+            audio: getAudio("hex-dark")
+        },
+        {
+            // WHITE - 2.0x - 5.0x
             color: "#dcdfe4",
             text: "black",
             point: 2,
@@ -295,6 +318,7 @@ export const findTile = (number: number): any => {
             audio: getAudio("hex-white")
         },
         {
+            // BLUE - 5.0x - 10.0x
             color: "#017bff",
             text: "white",
             point: 5,
@@ -304,6 +328,7 @@ export const findTile = (number: number): any => {
             audio: getAudio("hex-blue")
         },
         {
+            // ORANGE - 10.0x - 100.0x
             color: "#ff9d00",
             text: "black",
             point: 10,
@@ -313,6 +338,7 @@ export const findTile = (number: number): any => {
             audio: getAudio("hex-orange")
         },
         {
+            // GREEN - 100.0x+
             color: "#00e701",
             text: "white",
             point: 100,
@@ -322,6 +348,7 @@ export const findTile = (number: number): any => {
             audio: getAudio("hex-green")
         },
         {
+            // DIAMOND - 1000.0x+
             color: "#50e3c2",
             text: "white",
             point: 1000,
