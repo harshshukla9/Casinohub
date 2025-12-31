@@ -1,7 +1,7 @@
 'use client'
 import AmountInput from "@/components/shared/AmountInput";
 import ResultModal from "@/components/shared/ResultModal";
-import useIsMobile from "@/hooks/useIsMobile";
+
 import Layout from "@/layout/layout";
 import axiosServices from "@/util/axios";
 import formatAmount from "@/util/formatAmount";
@@ -53,7 +53,6 @@ const SUITS = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
 const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 
 const VideoPoker = () => {
-    const isMobile = useIsMobile();
     const { address } = useAccount();
     const { balance, isLoading: isLoadingBalance } = useUserBalance();
     const [betAmount, setBetAmount] = useState<number>(0);
@@ -204,46 +203,62 @@ const VideoPoker = () => {
 
     return (
         <Layout>
-            <div className="flex w-full justify-center h-full p-4">
-                <div className={`${isMobile ? "flex flex-col items-center" : "flex"} w-full rounded-xl overflow-hidden`}>
-                    <div className={`flex items-center justify-center w-full p-4 md:p-6 gap-2 ${isMobile ? "min-h-[350px]" : "min-h-[400px]"} relative h-full overflow-hidden`}>
-                        <div className="flex-col py-2 md:px-10 w-full md:w-auto">
-                            <PayoutTable ranking={ranking} betAmount={betAmount} dealing={dealing} />
-                            <div className="flex justify-center">
+            <div className="w-full min-h-[calc(100vh-80px)] px-2 sm:px-4 lg:px-6 py-4 md:py-6">
+                <div className="max-w-7xl mx-auto">
+                    <div className="flex flex-col lg:flex-row gap-4 bg-gradient-to-br from-gray-50 to-white rounded-2xl overflow-hidden shadow-2xl border border-gray-200">
+                        {/* Game Area */}
+                        <div className="flex-1 flex items-center justify-center p-4 md:p-6">
+                            <div className="w-full max-w-4xl flex flex-col">
+                                <PayoutTable ranking={ranking} betAmount={betAmount} dealing={dealing} />
+                                <div className="flex justify-center my-4">
+                                    <Button
+                                        onClick={handleDeal}
+                                        disabled={loading}
+                                        className="py-3 px-8 bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 text-white rounded-xl font-bold transition-all duration-200 shadow-lg hover:shadow-xl"
+                                    >
+                                        {dealing ? "Deal" : "Bet Again"}
+                                    </Button>
+                                </div>
+                                <VideoPokerGameScreen
+                                    cards={cards}
+                                    holds={holds}
+                                    onSelect={handleHolder}
+                                    dealing={dealing}
+                                    gamestart={gamestart}
+                                    winningCards={winningCards}
+                                />
+                            </div>
+                            <ResultModal
+                                visible={!gamestart && winningCards.length > 0 && ranking !== ""}
+                                data={{
+                                    odds: currentpayout?.multiplier || 0,
+                                    profit: (currentpayout?.multiplier || 0) * betAmount,
+                                    coin: ""
+                                }}
+                                Currency={""}
+                            />
+                        </div>
+
+                        {/* Control Panel */}
+                        <div className="w-full lg:w-[380px] bg-white border-t lg:border-t-0 lg:border-l border-gray-200 rounded-t-2xl lg:rounded-t-none p-5 lg:p-6">
+                            {address && (
+                                <div className="mb-4 pb-4 border-b border-gray-100">
+                                    <GameBalanceDisplay />
+                                </div>
+                            )}
+
+                            <div className="flex flex-col space-y-4">
+                                <AmountInput value={betAmount} onChange={setBetAmount} disabled={disabled} />
                                 <Button
+                                    disabled={disabled}
                                     onClick={handleDeal}
-                                    disabled={loading}
-                                    className="mt-5 py-3 px-6 w-30 bg-black hover:bg-gray-900 text-white rounded-xl font-bold transition-all duration-200 shadow-md hover:shadow-lg"
+                                    className="bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 text-white rounded-xl uppercase font-bold py-4 shadow-lg hover:shadow-xl transition-all duration-200"
                                 >
-                                    {dealing ? "Deal" : "Bet Again"}
+                                    Bet
                                 </Button>
                             </div>
-                            <VideoPokerGameScreen cards={cards} holds={holds} onSelect={handleHolder} dealing={dealing} gamestart={gamestart} winningCards={winningCards} />
                         </div>
-                        <ResultModal visible={!gamestart && winningCards.length > 0 && ranking !== ""} data={{ odds: currentpayout?.multiplier || 0, profit: (currentpayout?.multiplier || 0) * betAmount, coin: "" }} Currency={""} />
                     </div>
-
-                    {!isMobile && (
-                        <div className="w-full md:w-[340px] p-6 bg-white border-l border-gray-200 shadow-sm flex flex-col justify-between space-y-4">
-                            <div className="flex flex-col gap-4">
-                                <AmountInput value={betAmount} onChange={setBetAmount} disabled={disabled} />
-                                <Button disabled={disabled} onClick={handleDeal} className="bg-black hover:bg-gray-900 text-white rounded-xl uppercase font-bold py-3.5 shadow-md hover:shadow-lg transition-all duration-200">
-                                    Bet
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-
-                    {isMobile && (
-                        <div className="w-full px-4 p-5 bg-white border-t border-gray-200 shadow-sm flex flex-col rounded-t-2xl space-y-4">
-                            <div className="flex flex-col gap-4">
-                                <AmountInput value={betAmount} onChange={setBetAmount} disabled={disabled} />
-                                <Button disabled={disabled} onClick={handleDeal} className="bg-black hover:bg-gray-900 text-white rounded-xl uppercase font-bold py-3.5 shadow-md hover:shadow-lg transition-all duration-200">
-                                    Bet
-                                </Button>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
         </Layout>
@@ -253,7 +268,6 @@ const VideoPoker = () => {
 export default VideoPoker;
 
 const PayoutTable = ({ ranking, betAmount, dealing }: { ranking: string, betAmount: number, dealing: boolean }) => {
-    const isMobile = useIsMobile();
     return (
         <div className="mx-auto border border-gray-200 text-gray-900 shadow-md rounded-xl overflow-hidden">
             <div className="p-4">
@@ -261,19 +275,15 @@ const PayoutTable = ({ ranking, betAmount, dealing }: { ranking: string, betAmou
                     {payouts.map((payout, index) => {
                         let iswinning = !dealing && payout.id === ranking;
                         return (
-                            <div key={index} className="mt-1 items-center grid uppercase font-bold" style={{
-                                gridTemplateColumns: isMobile ? '5fr 2fr' : '5fr 2fr 1fr 2fr'
-                            }}>
+                            <div key={index} className="mt-1 items-center grid uppercase font-bold grid-cols-[5fr_2fr] sm:grid-cols-[5fr_2fr_1fr_2fr]">
                                 <div className={`py-2 px-4 text-sm ${iswinning ? "bg-black text-white" : "bg-gray-100 text-gray-900"} rounded-l-lg`}>{payout.name}</div>
-                                <div className={`py-2 px-4 text-center text-sm rounded-r-lg ${iswinning ? "bg-black text-white" : "bg-gray-200 text-gray-900"}`}>{payout.multiplier}x</div>
-                                {!isMobile && <div className="flex justify-center">
+                                <div className={`py-2 px-4 text-center text-sm rounded-r-lg sm:rounded-none ${iswinning ? "bg-black text-white" : "bg-gray-200 text-gray-900"}`}>{payout.multiplier}x</div>
+                                <div className="hidden sm:flex justify-center">
                                     {iswinning && <div className="w-5 h-5 text-black">
-                                        <svg fill="currentColor" viewBox="0 0 64 64"><title></title><path fillRule="evenodd" clipRule="evenodd" d="m37.036 2.1 24.875 24.865a7.098 7.098 0 0 1 2.09 5.04c0 1.969-.799 3.75-2.09 5.04L37.034 61.909a7.076 7.076 0 0 1-5.018 2.078c-.086 0-.174 0-.25-.004v.004h-.01a7.067 7.067 0 0 1-4.79-2.072L2.089 37.05A7.098 7.098 0 0 1 0 32.009c0-1.97.798-3.75 2.09-5.04L26.965 2.102v.002A7.07 7.07 0 0 1 31.754.02l.002-.004h-.012c.088-.002.176-.004.264-.004A7.08 7.08 0 0 1 37.036 2.1Z"></path></svg>
+                                        <svg fill="currentColor" viewBox="0 0 64 64"><title></title><path fillRule="evenodd" clipRule="evenodd" d="m37.036 2.1 24.875 24.865a7.098 7.098 0 0 1 2.09 5.04c0 1.969-.799 3.75-2.09 5.04L37.034 61.909a7.076 7.076 0 0 1-5.018 2.078c-.086 0-.174  0-.25-.004v.004h-.01a7.067 7.067 0 0 1-4.79-2.072L2.089 37.05A7.098 7.098 0 0 1 0 32.009c0-1.97.798-3.75 2.09-5.04L26.965 2.102v.002A7.07 7.07 0 0 1 31.754.02l.002-.004h-.012c.088-.002.176-.004.264-.004A7.08 7.08 0 0 1 37.036 2.1Z"></path></svg>
                                     </div>}
-                                </div>}
-                                {!isMobile &&
-                                    <div className={`py-2 px-4 text-right text-sm ${iswinning ? "bg-black text-white" : "bg-gray-100 text-gray-900"} rounded-lg`}>{formatAmount(betAmount * payout.multiplier)} <span className="text-gray-600">💰</span></div>
-                                }
+                                </div>
+                                <div className={`hidden sm:block py-2 px-4 text-right text-sm ${iswinning ? "bg-black text-white" : "bg-gray-100 text-gray-900"} rounded-lg`}>{formatAmount(betAmount * payout.multiplier)} <span className="text-gray-600">💰</span></div>
                             </div>)
                     })}
                 </div>

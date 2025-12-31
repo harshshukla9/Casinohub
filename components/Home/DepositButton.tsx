@@ -5,6 +5,7 @@ import { useAccount, useWalletClient, usePublicClient } from 'wagmi'
 import { useDeposit, usePlayerDeposits, useTokenBalance, useTokenAllowance, useApproveToken, useApproveTokenMax } from '../../smartcontracthooks'
 import { StatusL2Withdrawl, STT_TOKEN_ADDRESS } from '@/lib/contract'
 import { parseUnits } from 'viem'
+import { AnimatedDrawer } from '../spectrumui/animateddrawer'
 
 interface WithdrawalHistory {
   _id: string
@@ -63,7 +64,7 @@ export function DepositButton() {
 
   // Check token allowance
   const { allowance, allowanceWei, isLoading: isLoadingAllowance, refetch: refetchAllowance } = useTokenAllowance()
-  
+
   // Format allowance for display - show "Unlimited" for max uint256
   const formatAllowance = (allowanceStr: string, allowanceWei: bigint) => {
     // Max uint256 value: 2^256 - 1
@@ -217,7 +218,7 @@ export function DepositButton() {
       setTimeout(() => setDepositError(''), 3000)
       return
     }
-    
+
     // Check if approval is needed
     if (amountNeedsApproval && amountNeedsApproval(depositAmount)) {
       setDepositError('Please approve tokens first before depositing')
@@ -454,7 +455,7 @@ export function DepositButton() {
 
   return (
     <>
-      <button
+      {/* <button
         onClick={openModal}
         className="w-full bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
       >
@@ -485,7 +486,6 @@ export function DepositButton() {
               </button>
             </div>
 
-            {/* Success/Error Messages */}
             {successMessage && (
               <div className="mb-4 p-3 bg-green-500/20 border border-green-400/30 rounded-lg text-green-100 text-sm">
                 ✅ {successMessage}
@@ -540,9 +540,8 @@ export function DepositButton() {
                     placeholder="0.0"
                     step="0.001"
                     min="0"
-                    className={`w-full px-3 py-2.5 border rounded-lg bg-white/10 text-white placeholder-white/50 focus:outline-none focus:ring-2 ${
-                      depositError ? 'border-red-500/50 focus:ring-red-500' : 'border-white/20 focus:ring-white/50'
-                    }`}
+                    className={`w-full px-3 py-2.5 border rounded-lg bg-white/10 text-white placeholder-white/50 focus:outline-none focus:ring-2 ${depositError ? 'border-red-500/50 focus:ring-red-500' : 'border-white/20 focus:ring-white/50'
+                      }`}
                     disabled={isDepositing || isProcessingDeposit || isLoadingTokenBalance}
                   />
                   {depositError && (
@@ -550,7 +549,6 @@ export function DepositButton() {
                   )}
                 </div>
 
-                {/* Approval Status */}
                 {depositAmount && parseFloat(depositAmount) > 0 && (
                   <div className="p-3 rounded-lg bg-white/5 border border-white/10">
                     {isLoadingAllowance ? (
@@ -654,19 +652,14 @@ export function DepositButton() {
                     placeholder="0.0"
                     step="0.001"
                     min={MIN_WITHDRAWAL_AMOUNT}
-                    className={`w-full px-3 py-2.5 border rounded-lg bg-white/10 text-white placeholder-white/50 focus:outline-none focus:ring-2 ${
-                      withdrawError ? 'border-red-500/50 focus:ring-red-500' : 'border-white/20 focus:ring-white/50'
-                    }`}
+                    className={`w-full px-3 py-2.5 border rounded-lg bg-white/10 text-white placeholder-white/50 focus:outline-none focus:ring-2 ${withdrawError ? 'border-red-500/50 focus:ring-red-500' : 'border-white/20 focus:ring-white/50'
+                      }`}
                     disabled={Boolean(isProcessingWithdraw || isLoadingWithdrawalHistory || (withdrawalData && !withdrawalData.canWithdraw))}
                   />
                   {withdrawError && (
                     <p className="mt-2 text-sm text-red-400">{withdrawError}</p>
                   )}
                 </div>
-
-                {/* <div className="p-3 rounded-lg bg-blue-500/20 border border-blue-400/30 text-xs text-blue-100">
-                  ⚠️ Your balance will be deducted immediately upon request. Withdrawals are processed within 24-48 hours.
-                </div> */}
 
                 {withdrawalData && withdrawalData.withdrawals.length > 0 && (
                   <div>
@@ -677,13 +670,12 @@ export function DepositButton() {
                           <div className="flex justify-between items-center">
                             <span className="text-white font-medium">{w.amount.toFixed(4)} STT</span>
                             <span
-                              className={`px-2 py-0.5 rounded capitalize text-xs ${
-                                w.status === 'completed'
-                                  ? 'bg-green-500/20 text-green-300'
-                                  : w.status === 'pending'
+                              className={`px-2 py-0.5 rounded capitalize text-xs ${w.status === 'completed'
+                                ? 'bg-green-500/20 text-green-300'
+                                : w.status === 'pending'
                                   ? 'bg-yellow-500/20 text-yellow-200'
                                   : 'bg-red-500/20 text-red-300'
-                              }`}
+                                }`}
                             >
                               {w.status}
                             </span>
@@ -729,7 +721,8 @@ export function DepositButton() {
           </div>
         </div>,
         document.body
-      )}
+      )} */}
+      <AnimatedDrawer />
     </>
   )
 }

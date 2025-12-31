@@ -24,7 +24,7 @@ const MineCustomInput = ({
     else onChange(inputValue);
   }, [visible, inputValue]);
   return (
-    <div className="mt-4 flex flex-col space-y-2">
+    <div className="flex flex-col space-y-2">
       {label && (
         <p className={`text-xs font-medium ${disabled ? "text-gray-400" : "text-gray-700"}`}>
           {label}

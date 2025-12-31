@@ -1,7 +1,6 @@
 "use client"
 import { useCallback, useEffect, useRef, useState } from "react";
 import axiosServices from "@/util/axios";
-import useIsMobile from "@/hooks/useIsMobile";
 import SwitchTab from "@/components/shared/SwitchTab";
 import AmountInput from "@/components/shared/AmountInput";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,11 @@ import { useAccount } from "wagmi";
 import { useUserBalance } from "@/hooks/useUserBalance";
 import { placeBet as placeBetBalance, cashout as cashoutBalance, hasSufficientBalance } from "@/lib/game-balance";
 import { GameBalanceDisplay } from "@/components/shared/GameBalanceDisplay";
+import Marquee from "react-fast-marquee";
+import { MarqueeEdge } from "@/components/ui/marquee";
+import { motion } from "framer-motion";
+import Image from "next/image";
+
 
 const SLIDE_API = "/api/slide";
 
@@ -78,20 +82,18 @@ const useAudio = () => {
 };
 
 const SlideGame = () => {
-    const isMobile = useIsMobile();
     const { address } = useAccount();
     const { balance, isLoading: isLoadingBalance } = useUserBalance();
 
     const [activeTab, setActiveTab] = useState<number>(0);
     const [betAmount, setBetAmount] = useState<number>(0);
-    const [target, setTarget] = useState<number>(2); // Default target 2x (mandatory)
+    const [target, setTarget] = useState<number>(2);
     const betCount = useRef<number>(0);
     const [autobet, setAutobet] = useState<boolean>(false);
     const [bets, setBets] = useState<any[]>([]);
 
     const [history, setHistory] = useState<any[]>([]);
 
-    // Initial numbers include low multipliers (0.0, 0.3, 0.5, 0.8) for more excitement!
     const [result, setResult] = useState({
         numbers: [0.0, 1.95, 0.5, 2.16, 0.3, 1.49, 0.8, 21.75, 0.0, 4.86, 1.37, 0.15, 1.03, 1.79, 0.0, 1.34, 0.65, 1, 1.75, 0.45, 1.91, 4.86, 0.0, 1.24, 17.43, 0.28, 1.61, 9.88, 0.55, 1.05, 0.0, 1.32, 1.9, 0.89, 1.28, 0.0, 11.54, 1.35, 4.63, 0.75, 2.65, 0.0, 4.92, 1.31, 0.4, 1.51, 0.0, 5.8],
         multiplier: 1
@@ -129,7 +131,6 @@ const SlideGame = () => {
             return;
         }
 
-        // Target multiplier is MANDATORY
         if (!target || target <= 0) {
             alert("Please select a target multiplier! (e.g., 2x, 3x, 5x)");
             return;
@@ -317,9 +318,11 @@ const SlideGame = () => {
             if (inputDisable.current)
                 return "Waiting.."
             return "Bet"
+        } else if (status === STATUS.STARTING) {
+            return "Starting..."
         }
 
-        return "Starting..."
+        return "Bet"
     }
 
     const disable = inputDisable.current || planedbet;
@@ -330,102 +333,142 @@ const SlideGame = () => {
 
     return (
         <Layout>
-            <div className={`h-full ${isMobile ? "w-full p-2" : "p-4"}`}>
-                <div className="flex flex-col lg:flex-row rounded-xl overflow-hidden shadow-lg h-full">
-                    <div className="flex-1 flex items-center justify-center">
-                        <div className={`gap-2 ${isMobile ? "min-h-[350px]" : "min-h-[400px]"} relative h-full overflow-hidden flex items-center justify-center w-full`}>
-                            <div className="flex absolute right-1/2 translate-x-1/2 top-5 z-20 w-full max-w-[300px] px-4 space-x-1 overflow-x-auto">
-                                {history.slice(history.length - 10, history.length).map((h: any, index) => {
-                                    return <Button
-                                        onClick={() => { }}
-                                        className="p-[3px] min-w-10 text-xs font-semibold rounded-lg shadow-sm"
-                                        key={index}
-                                        style={{
-                                            background: findTile(h.resultpoint).color,
-                                            color: findTile(h.resultpoint).text
-                                        }}>
-                                        {h.resultpoint}x
-                                    </Button>
-                                })}
-                                {/* <Button onClick={() => { }} className="p-[3px] min-w-10 text-xs font-semibold rounded-lg shadow-sm" style={{ background: "#50e3c2", color: "#000" }}>
-                                    Fair
-                                </Button> */}
-                            </div>
-                            <div className="w-full h-full flex items-center">
-                                <Slider multiplier={result.multiplier} elapsedTime={elapsedTime} numbers={result.numbers} />
-                            </div>
-                            <div className="absolute bottom-10 left-5 z-20">
-                                <div className="flex space-x-2 items-center bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-sm">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-                                    <div className="text-gray-900 text-sm font-medium">Bets: {bets.length}</div>
+            <div className="w-full min-h-[calc(100vh-80px)] px-2 sm:px-4 lg:px-6 py-4 md:py-6">
+                <div className="max-w-7xl mx-auto">
+                    <div className="flex flex-col lg:flex-row gap-4 ">
+                        <div className="flex-1 flex items-center justify-center py-2">
+                            <div className="w-full">
+                                {(status === STATUS.STARTING || status === STATUS.PLAYING) && savedBet.current && (
+                                    <motion.div
+                                        initial={{ y: "-100%" }}
+                                        animate={{ y: 0 }}
+                                        transition={{ duration: 0.6, ease: "easeOut" }}
+                                        className="absolute h-[10vh] top-0 left-0 right-0 z-50 bg-white shadow-lg"
+                                    >
+                                        <div className="h-full flex items-center justify-between px-6">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] text-gray-600 font-medium uppercase tracking-wider">Bet</span>
+                                                <div className="flex items-center gap-1.5">
+                                                    <Image src="/impAssets/Chip.webp" alt="coin" width={18} height={18} />
+                                                    <span className="text-base font-bold text-gray-900">{(Number(savedBet.current.betAmount) || 0).toFixed(2)}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col items-center">
+                                                <span className="text-[10px] text-gray-600 font-medium uppercase tracking-wider">
+                                                    {status === STATUS.PLAYING ? "Result" : "Target"}
+                                                </span>
+                                                <motion.div
+                                                    animate={{
+                                                        scale: status === STATUS.PLAYING ? [1, 1.08, 1] : 1,
+                                                        color: status === STATUS.PLAYING ? "#10b981" : "#000000"
+                                                    }}
+                                                    transition={{ duration: 0.4, repeat: status === STATUS.PLAYING ? Infinity : 0 }}
+                                                    className="text-3xl font-black"
+                                                >
+                                                    {status === STATUS.PLAYING
+                                                        ? `${result.multiplier.toFixed(2)}x`
+                                                        : `${savedBet.current.target.toFixed(2)}x`
+                                                    }
+                                                </motion.div>
+                                            </div>
+
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-[10px] text-gray-600 font-medium uppercase tracking-wider">
+                                                    Potential
+                                                </span>
+                                                <div className="flex items-center gap-1.5">
+                                                    <motion.span
+                                                        animate={{
+                                                            scale: status === STATUS.PLAYING ? [1, 1.05, 1] : 1
+                                                        }}
+                                                        transition={{ duration: 0.3, repeat: status === STATUS.PLAYING ? Infinity : 0 }}
+                                                        className="text-base font-bold text-blue-600"
+                                                    >
+                                                        +{((savedBet.current.betAmount || 0) * savedBet.current.target).toFixed(2)}
+                                                    </motion.span>
+                                                    <Image src="/impAssets/Chip.webp" alt="coin" width={18} height={18} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                                <div className="relative min-h-[350px] md:min-h-[450px] lg:min-h-[500px] overflow-hidden flex items-center justify-center rounded-xl">
+
+                                    <MarqueeEdge color="black" size="sm" side="left" className="w-1/6 h-full top-0 left-0" />
+                                    <MarqueeEdge color="black" size="sm" side="right" className="w-1/6 h-full top-0 right-0" />
+
+                                    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 w-full max-w-[90%] md:max-w-md px-2">
+                                        <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+                                            {history.slice(history.length - 10, history.length).map((h: any, index) => (
+                                                <Button
+                                                    key={index}
+                                                    onClick={() => { }}
+                                                    className="p-2 min-w-[40px] text-xs font-semibold rounded-lg shadow-md shrink-0"
+                                                    style={{
+                                                        background: findTile(h.resultpoint).color,
+                                                        color: findTile(h.resultpoint).text
+                                                    }}
+                                                >
+                                                    {h.resultpoint}x
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="w-full h-full flex items-center">
+                                        <Slider multiplier={result.multiplier} elapsedTime={elapsedTime} numbers={result.numbers} />
+                                    </div>
+
+                                    <div className="absolute bottom-4 left-4 z-20">
+                                        <div className="flex items-center gap-2 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-gray-200">
+                                            <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+                                            <span className="text-gray-900 text-sm font-semibold">Bets: {bets.length}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="w-full absolute bottom-0 z-20">
+                                        <StatusBar status={status} />
+                                    </div>
                                 </div>
                             </div>
-                            <div className="w-full absolute bottom-0 z-20">
-                                <StatusBar status={status} />
+                        </div>
+
+                        <div className="w-full lg:w-[380px] bg-white border-t lg:border-t-0 lg:border-l border-gray-200 rounded-2xl p-5 lg:p-6">
+
+                            <div className="flex flex-col space-y-3">
+                                {/* <SwitchTab onChange={setActiveTab} active={activeTab} disabled={disable} /> */}
+                                <AmountInput onChange={setBetAmount} value={betAmount} disabled={disable} />
+                                <MultiPlierInput onChange={setTarget} value={target} disabled={disable} required={true} label="Target Multiplier *" />
+
+                                <Button
+                                    className="p-6 bg-sky-400 w-full hover:bg-sky-500 text-white rounded-3xl text-lg flex items-center gap-3 transition-colors"
+                                    disabled={disable || status === STATUS.STARTING}
+                                    onClick={() => {
+                                        if (betting || inputDisable.current || status === STATUS.STARTING)
+                                            return;
+                                        if (status === STATUS.PLAYING) {
+                                            if (planedbet) {
+                                                savedBet.current = undefined;
+                                                setPlanedBet(false);
+                                            } else {
+                                                createbet();
+                                            }
+                                        } else if (status === STATUS.BETTING) {
+                                            createbet();
+                                        } else if (status === STATUS.WAITTING) {
+                                            createbet();
+                                        }
+                                    }}
+                                >
+                                    {getButtonContent()}
+                                </Button>
                             </div>
                         </div>
                     </div>
-
-                    {isMobile ? (
-                        <div className="p-5 bg-white border-t border-gray-200 shadow-sm flex flex-col space-y-3 rounded-xl">
-                            {address && <div className="mb-2 pb-4 border-b border-gray-100"><GameBalanceDisplay /></div>}
-                            <Button
-                                className="bg-black hover:bg-gray-900 text-white font-bold uppercase rounded-xl py-3.5 shadow-md hover:shadow-lg transition-all duration-200"
-                                disabled={disable || status === STATUS.STARTING}
-                                onClick={() => {
-                                    if (betting || inputDisable.current || status === STATUS.STARTING)
-                                        return;
-                                    if (status === STATUS.PLAYING) {
-                                        if (planedbet) {
-                                            savedBet.current = undefined;
-                                            setPlanedBet(false);
-                                        } else {
-                                            createbet();
-                                        }
-                                    } else if (status === STATUS.BETTING) {
-                                        createbet();
-                                    } else if (status === STATUS.WAITTING) {
-                                        createbet();
-                                    }
-                                }}>
-                                {getButtonContent()}
-                            </Button>
-                            <AmountInput onChange={setBetAmount} value={betAmount} disabled={disable} />
-                            <MultiPlierInput onChange={setTarget} value={target} disabled={disable} required={true} label="Target Multiplier *" />
-                            <SwitchTab onChange={setActiveTab} active={activeTab} disabled={disable} />
-                        </div>
-                    ) : (
-                        <div className="w-full lg:w-[340px] p-6 bg-white border-l border-gray-200 shadow-sm flex flex-col space-y-3">
-                            {address && <div className="mb-4 pb-4 border-b border-gray-100"><GameBalanceDisplay /></div>}
-                            <SwitchTab onChange={setActiveTab} active={activeTab} disabled={disable} />
-                            <AmountInput onChange={setBetAmount} value={betAmount} disabled={disable} />
-                            <MultiPlierInput onChange={setTarget} value={target} disabled={disable} required={true} label="Target Multiplier *" />
-                            <Button
-                                className="bg-black hover:bg-gray-900 text-white font-bold uppercase rounded-xl py-3.5 shadow-md hover:shadow-lg transition-all duration-200"
-                                disabled={disable || status === STATUS.STARTING}
-                                onClick={() => {
-                                    if (betting || inputDisable.current || status === STATUS.STARTING)
-                                        return;
-                                    if (status === STATUS.PLAYING) {
-                                        if (planedbet) {
-                                            savedBet.current = undefined;
-                                            setPlanedBet(false);
-                                        } else {
-                                            createbet();
-                                        }
-                                    } else if (status === STATUS.BETTING) {
-                                        createbet();
-                                    } else if (status === STATUS.WAITTING) {
-                                        createbet();
-                                    }
-                                }}>
-                                {getButtonContent()}
-                            </Button>
-                        </div>
-                    )}
                 </div>
             </div>
-        </Layout>
+        </Layout >
     )
 }
 
@@ -464,16 +507,5 @@ const StatusBar = ({ status }: { status: STATUS }) => {
         }
     }, [status])
 
-    return (
-        <></>
-        // <div className="w-full h-2 flex-col justify-between bg-gray-100">
-        //     {statustime === -1 && <></>}
-        //     {statustime === 0 && <div className="text-gray-900 text-center py-1 text-sm font-medium">Starting...</div>}
-        //     {statustime > 0 && (
-        //         <div className="h-2 bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-100" style={{
-        //             width: (100 / 2000) * statustime + "%"
-        //         }}></div>
-        //     )}
-        // </div>
-    )
+    return <></>
 }

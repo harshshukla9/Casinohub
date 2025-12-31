@@ -8,7 +8,7 @@ import { GAME_STATUS, MINE_OBJECT, MineArea } from "@/components/games/Mine/type
 import ProfitAmount from "@/components/shared/ProfitAmount";
 import { BombSvg, EthSvg } from "@/components/svgs";
 import SwitchTab from "@/components/shared/SwitchTab";
-import useIsMobile from "@/hooks/useIsMobile";
+
 import Layout from "@/layout/layout";
 import axiosServices from "@/util/axios";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { useUserBalance } from "@/hooks/useUserBalance";
 import { placeBet as placeBetBalance, cashout as cashoutBalance, hasSufficientBalance } from "@/lib/game-balance";
 import { GameBalanceDisplay } from "@/components/shared/GameBalanceDisplay";
 import { motion } from "motion/react";
+import Image from "next/image";
 const MINE_API = "/api/mine";
 
 function calculateMinesGame(mines: number, picks: number, bet: number): any {
@@ -80,7 +81,6 @@ function calculateMinesGame(mines: number, picks: number, bet: number): any {
 }
 
 const MineGame: React.FC = () => {
-    const isMobile = useIsMobile();
     const { address } = useAccount();
     const { balance, isLoading: isLoadingBalance } = useUserBalance();
     const [activeTab, setActiveTab] = useState(0); // 0 for Manual, 1 for Auto
@@ -470,7 +470,7 @@ const MineGame: React.FC = () => {
 
     // Render mine count slider
     const renderMineCount = () => (
-        <div className="mt-4 flex flex-col space-y-2">
+        <div className="flex flex-col space-y-2">
             <p className={`text-xs font-medium ${disabled ? "text-gray-400" : "text-gray-700"}`}>
                 Mines
             </p>
@@ -495,7 +495,7 @@ const MineGame: React.FC = () => {
 
     // Render mine status fields
     const renderMineStatus = () => (
-        <div className="mt-4 w-full space-y-3">
+        <div className="w-full space-y-3">
             <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col space-y-2">
                     <p className="text-xs font-medium text-gray-700">
@@ -523,14 +523,12 @@ const MineGame: React.FC = () => {
 
     // Render pick random tile button
     const renderRandomPickBtn = () => (
-        <div className="mt-4 w-full">
-            <Button
-                onClick={randomBet}
-                className="w-full font-semibold py-3 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-200 shadow-sm transition-all duration-200"
-            >
-                Pick Random Tile
-            </Button>
-        </div>
+        <Button
+            onClick={randomBet}
+            className="w-full font-semibold py-3  rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-200 shadow-sm transition-all duration-200"
+        >
+            Pick Random Tile
+        </Button>
     );
 
     // Render bet button
@@ -538,7 +536,7 @@ const MineGame: React.FC = () => {
         const disabledbtn =
             (!isAuto && loading) || (isAuto && autoAreas.length == 0);
         return (
-            <div className="mt-5 w-full">
+            <div className="w-full space-y-2">
                 <Button
                     disabled={disabledbtn}
                     onClick={() => {
@@ -561,7 +559,7 @@ const MineGame: React.FC = () => {
                         }
                     }}
                     className={`${disabledbtn ? "bg-gray-200" : "bg-black hover:bg-gray-900"
-                        } ${disabledbtn ? "text-gray-400" : "text-white"} font-bold py-3.5 px-6 rounded-xl w-full flex justify-center text-center transition-all duration-200 shadow-lg hover:shadow-xl disabled:shadow-none`}
+                        } ${disabledbtn ? "text-gray-400" : "text-white"} p-6 bg-sky-400 w-full hover:bg-sky-500 text-white rounded-3xl text-lg flex items-center gap-3 transition-colors`}
                 >
                     <div className="flex items-center gap-2 text-nowrap">
                         {status === GAME_STATUS.LIVE
@@ -572,7 +570,7 @@ const MineGame: React.FC = () => {
                                 ? "Start AutoBet"
                                 : "BET"}
                         {loading && (
-                            <div className="h-5 flex items-center justify-center animate-spin">
+                            <div className=" flex items-center justify-center animate-spin">
                                 <BombSvg />
                             </div>
                         )}
@@ -583,7 +581,7 @@ const MineGame: React.FC = () => {
     };
 
     const renderStopProfitAmount = () => (
-        <div className="mt-4 space-y-2">
+        <div className="space-y-2">
             <p className={`text-xs font-medium ${disabled ? "text-gray-400" : "text-gray-700"}`}>
                 Stop on Profit
             </p>
@@ -602,14 +600,19 @@ const MineGame: React.FC = () => {
                         } text-gray-900 font-medium w-full flex-1 text-sm focus:outline-none`}
                 />
                 <div className="w-5 ml-2">
-                    <EthSvg />
+                    <Image
+                        src="/impAssets/Chip.webp"
+                        alt="coin"
+                        width={24}
+                        height={24}
+                    />
                 </div>
             </div>
         </div>
     );
 
     const renderStopLossAmount = () => (
-        <div className="mt-4 space-y-2">
+        <div className="space-y-2">
             <p className={`text-xs font-medium ${disabled ? "text-gray-400" : "text-gray-700"}`}>
                 Stop on Loss
             </p>
@@ -628,7 +631,12 @@ const MineGame: React.FC = () => {
                         } text-gray-900 font-medium w-full flex-1 text-sm focus:outline-none`}
                 />
                 <div className="w-5 ml-2">
-                    <EthSvg />
+                    <Image
+                        src="/impAssets/Chip.webp"
+                        alt="coin"
+                        width={24}
+                        height={24}
+                    />
                 </div>
             </div>
         </div>
@@ -636,75 +644,114 @@ const MineGame: React.FC = () => {
 
     return (
         <Layout>
-            <div className="flex w-full justify-center">
-                <div
-                    className={` ${isMobile ? "flex flex-col  items-center" : "flex"
-                        } w-full rounded-md overflow-hidden`}
-                >
-                    {/* Main content */}
-                    <div className="flex items-center w-full">
-                        <div
-                            className={`${isMobile ? "w-11/12" : "w-[500px] xl:w-[630px]  p-5"} mx-auto relative`}
-                        >
-                            <div
-                                className={`grid grid-cols-5 gap-2 p-1.5 ${!areaFlag ? "animate-bounding" : ""
-                                    } `}>
-                                {[...Array(25)].map((_, index) => {
-                                    const mine = mineAreas.find((m) => m.point == index);
-                                    const auto = isAuto
-                                        ? autoAreas.findIndex((m) => m.point == index) !== -1
-                                        : false;
-                                    return (
-                                        <motion.div
-                                            key={index}
-                                            whileHover={{
-                                                x: -1,
-                                                y: -1,
-                                            }}
-                                            className={`overflow-hidden hover:shadow-lg max-h-[126px] ${mineAreas.length == 0 ? "animate-zoomIn" : ""
-                                                } `}
-                                        >
-                                            <MineButton
-                                                point={index}
-                                                mine={mine}
-                                                isAuto={auto}
-                                                onClick={isAuto ? selectArea : placeBet}
-                                            />
-                                        </motion.div>
-                                    );
-                                })}
+            <div className="w-full min-h-[calc(100vh-80px)] px-2 sm:px-4 lg:px-6 py-6 md:py-8">
+                <div className="max-w-7xl mx-auto">
+                    <div className="flex flex-col lg:flex-row gap-4  rounded-2xl overflow-hidden shadow-2xl">
+                        {/* Main Game Grid */}
+                        <div className="flex-1 flex items-center justify-center p-2 md:p-6">
+                            <div className="w-full max-w-2xl">
+                                <div className={`grid grid-cols-5 gap-2 p-2 ${!areaFlag ? "animate-bounding" : ""}`}>
+                                    {[...Array(25)].map((_, index) => {
+                                        const mine = mineAreas.find((m) => m.point == index);
+                                        const auto = isAuto
+                                            ? autoAreas.findIndex((m) => m.point == index) !== -1
+                                            : false;
+                                        return (
+                                            <motion.div
+                                                key={index}
+                                                whileHover={{
+                                                    x: -1,
+                                                    y: -1,
+                                                }}
+                                                className={`overflow-hidden hover:shadow-lg max-h-[126px] ${mineAreas.length == 0 ? "animate-zoomIn" : ""}`}
+                                            >
+                                                <MineButton
+                                                    point={index}
+                                                    mine={mine}
+                                                    isAuto={auto}
+                                                    onClick={isAuto ? selectArea : placeBet}
+                                                />
+                                            </motion.div>
+                                        );
+                                    })}
+                                </div>
+                                <MineModal
+                                    visible={resultVisible}
+                                    data={{
+                                        odds: result.odds,
+                                        profit: result.profit,
+                                        coin: null,
+                                    }}
+                                />
                             </div>
-                            <MineModal
-                                visible={resultVisible}
-                                data={{
-                                    odds: result.odds,
-                                    profit: result.profit,
-                                    coin: null,
-                                }}
-                            />
                         </div>
-                    </div>
-                    {!isMobile && (
-                        <div className="xl:w-[340px] bg-white border-l border-gray-200 p-6 flex-shrink-0 shadow-sm">
-                            {address && <div className="mb-6 pb-5 border-b border-gray-100"><GameBalanceDisplay /></div>}
+
+                        {/* Control Panel */}
+                        <div className="w-full lg:w-[380px] bg-white border-t lg:border-t-0 lg:border-l border-gray-200 rounded-t-2xl lg:rounded-t-none px-5 py-6 lg:p-6">
+                            {status === GAME_STATUS.LIVE &&
+                                <motion.div
+                                    initial={{ y: "-100%" }}
+                                    animate={{ y: 0 }}
+                                    transition={{ duration: 0.6, ease: "easeOut" }}
+                                    className="absolute h-[10vh] top-0 left-0 right-0 z-50 bg-white shadow-lg"
+                                >
+                                    <div className="h-full flex items-center justify-between px-4">
+                                        {/* Left: Bet Info */}
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-medium uppercase tracking-wider">Bet</span>
+                                            <div className="flex items-center gap-1">
+                                                <Image src="/impAssets/Chip.webp" alt="coin" width={16} height={16} />
+                                                <span className="text-sm font-bold">{(Number(betAmount) || 0).toFixed(2)}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Center: Multiplier */}
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-[10px] font-medium uppercase tracking-wider">Multiplier</span>
+                                            <motion.div
+                                                animate={{
+                                                    scale: [1, 1.1, 1],
+                                                    color: picks > 0 ? ["#000000", "#fef08a", "#000000"] : "#000000"
+                                                }}
+                                                transition={{ duration: 0.5 }}
+                                                className="text-2xl font-black "
+                                            >
+                                                {(Number(profitAndOdds?.probability) || 0).toFixed(2)}x
+                                            </motion.div>
+                                        </div>
+
+                                        {/* Right: Potential Win */}
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[10px] font-medium uppercase tracking-wider">Win</span>
+                                            <div className="flex items-center gap-1">
+                                                <motion.span
+                                                    animate={{ scale: picks > 0 ? [1, 1.05, 1] : 1 }}
+                                                    transition={{ duration: 0.3 }}
+                                                    className="text-sm font-bold text-blue-500"
+                                                >
+                                                    +{(Number(profitAndOdds?.roundedWinAmount) || 0).toFixed(2)}
+                                                </motion.span>
+                                                <Image src="/impAssets/Chip.webp" alt="coin" width={16} height={16} />
+                                            </div>
+                                            <span className="text-[9px] font-medium">{picks} gem{picks !== 1 ? 's' : ''} 💎</span>
+                                        </div>
+                                    </div>
+                                </motion.div>}
+
+
                             {isAuto ? (
-                                <div className="flex flex-col space-y-1">
-                                    <SwitchTab onChange={handleTabChange} active={activeTab} disabled={disabled} />
+                                <div className="flex flex-col space-y-3">
                                     <AmountInput value={betAmount} onChange={handleAmountChange} disabled={disabled} />
                                     {renderMineCount()}
                                     <BetNumberInput value={autoBetCount} disabled={disabled} onChange={handleBetCount} />
                                     <MineCustomInput
-                                        onChange={(value) => {
-                                            setOnWinP(value);
-                                        }}
+                                        onChange={(value) => setOnWinP(value)}
                                         value={onWinP}
                                         label={"On Win"}
                                         disabled={disabled}
                                     />
                                     <MineCustomInput
-                                        onChange={(value) => {
-                                            setOnLossP(value);
-                                        }}
+                                        onChange={(value) => setOnLossP(value)}
                                         value={onLossP}
                                         label={"On Loss"}
                                         disabled={disabled}
@@ -712,73 +759,27 @@ const MineGame: React.FC = () => {
                                     {renderStopProfitAmount()}
                                     {renderStopLossAmount()}
                                     {renderBetBtn()}
+                                    <SwitchTab onChange={handleTabChange} active={activeTab} disabled={disabled} />
                                 </div>
                             ) : (
-                                <div className="flex flex-col space-y-1">
-                                    <SwitchTab onChange={handleTabChange} active={activeTab} disabled={disabled} />
+                                <div className="flex flex-col gap-4">
+                                    {renderBetBtn()}
                                     <AmountInput value={betAmount} onChange={handleAmountChange} disabled={disabled} />
-
                                     {status === GAME_STATUS.READY && renderMineCount()}
                                     {status === GAME_STATUS.LIVE && renderMineStatus()}
-                                    {status === GAME_STATUS.LIVE && <ProfitAmount
-                                        disabled={disabled}
-                                        multiplier={profitAndOdds.probability}
-                                        profit={profitAndOdds.roundedWinAmount}
-                                        icon={
-                                            <EthSvg />
-                                        } />}
-                                    {status === GAME_STATUS.LIVE && renderRandomPickBtn()}
-                                    {renderBetBtn()}
+                                    {status === GAME_STATUS.LIVE && (
+                                        <ProfitAmount
+                                            disabled={disabled}
+                                            multiplier={profitAndOdds.probability}
+                                            profit={profitAndOdds.roundedWinAmount}
+                                            icon={<Image src="/impAssets/Chip.webp" alt="coin" width={24} height={24} />}
+                                        />
+                                    )}
+                                    <SwitchTab onChange={handleTabChange} active={activeTab} disabled={disabled} />
                                 </div>
                             )}
                         </div>
-                    )}
-
-                    {isMobile &&
-                        (isAuto ? (
-                            <div className="w-11/12 bg-gray-300 border border-gray-200 rounded-2xl p-5 mt-4 shadow-lg">
-                                {address && <GameBalanceDisplay />}
-                                {renderBetBtn()}
-                                <AmountInput value={betAmount} onChange={handleAmountChange} disabled={disabled} />
-                                {renderMineCount()}
-                                <BetNumberInput value={autoBetCount} disabled={disabled} onChange={handleBetCount} />
-                                <MineCustomInput
-                                    onChange={(value) => {
-                                        setOnWinP(value);
-                                    }}
-                                    value={onWinP}
-                                    label={"On Win"}
-                                    disabled={disabled}
-                                />
-                                <MineCustomInput
-                                    onChange={(value) => {
-                                        setOnLossP(value);
-                                    }}
-                                    value={onLossP}
-                                    label={"On Loss"}
-                                    disabled={disabled}
-                                />
-                                {renderStopProfitAmount()}
-                                {renderStopLossAmount()}
-                                <SwitchTab onChange={handleTabChange} active={activeTab} disabled={disabled} />
-                            </div>
-                        ) : (
-                            <div className="w-11/12 bg-gray-300 border border-gray-200 rounded-2xl p-5 mt-4 shadow-lg">
-                                {address && <GameBalanceDisplay />}
-                                <AmountInput value={betAmount} onChange={handleAmountChange} disabled={disabled} />
-                                {renderBetBtn()}
-                                {status === GAME_STATUS.READY && renderMineCount()}
-                                {status === GAME_STATUS.LIVE && renderMineStatus()}
-                                {status === GAME_STATUS.LIVE && <ProfitAmount
-                                    disabled={disabled}
-                                    multiplier={profitAndOdds.probability}
-                                    profit={profitAndOdds.roundedWinAmount}
-                                    icon={
-                                        <EthSvg />
-                                    } />}
-                                <SwitchTab onChange={handleTabChange} active={activeTab} disabled={disabled} />
-                            </div>
-                        ))}
+                    </div>
                 </div>
             </div>
         </Layout>

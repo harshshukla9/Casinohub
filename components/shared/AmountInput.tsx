@@ -1,5 +1,7 @@
+import { InfoIcon } from "lucide-react";
 import CurrencyIcon from "./CurrencyIcon";
 import Input from "./Input";
+import Image from "next/image";
 
 type props = { onChange: Function, disabled?: boolean, value: number, className?: string, label?: string, amount?: number };
 
@@ -14,7 +16,7 @@ const AmountInput: React.FC<props> = ({ onChange, disabled, value, className, la
             </div>
         </div>
         <div className={`flex bg-white rounded-xl overflow-hidden border border-gray-200 hover:border-gray-400 transition-all duration-200 shadow-sm ${className}`}>
-            <Input onChange={(e: number) => onChange(e)} value={value} disabled={disabled} type="number" className="text-black" icon={<CurrencyIcon />} />
+            <Input onChange={(e: number) => onChange(e)} value={value} disabled={disabled} type="number" className="text-black" icon={<Image src="/impAssets/Chip.webp" alt="Chip" width={24} height={24} />} />
             <div className="flex relative border-l border-gray-200">
                 <button
                     disabled={disabled}
