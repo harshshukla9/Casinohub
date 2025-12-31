@@ -28,11 +28,21 @@ function generateCrashPoint(): number {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if MongoDB URI is configured
+    if (!process.env.MONGODB_URI) {
+      console.error('❌ MONGODB_URI environment variable is not set');
+      return NextResponse.json(
+        { error: 'Database configuration error. Please contact support.' },
+        { status: 500 }
+      );
+    }
+
     await connectDB();
     const { walletAddress, betAmount, target } = await request.json();
 
     if (!walletAddress || !betAmount) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      console.error('Missing required fields:', { walletAddress: !!walletAddress, betAmount: !!betAmount });
+      return NextResponse.json({ error: 'Missing required fields: walletAddress and betAmount' }, { status: 400 });
     }
     
     // Target is optional (0 or undefined means no target)
@@ -40,10 +50,20 @@ export async function POST(request: NextRequest) {
 
     const normalizedWalletAddress = walletAddress.toLowerCase();
 
-    // Find user
-    const user = await User.findOne({ walletAddress: normalizedWalletAddress });
+    // Find user or create if doesn't exist
+    let user = await User.findOne({ walletAddress: normalizedWalletAddress });
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      console.log('User not found, creating new user:', normalizedWalletAddress);
+      // Create user with initial balance of 0
+      user = await User.create({
+        walletAddress: normalizedWalletAddress,
+        balance: 0,
+        totalDeposited: 0,
+        totalWithdrawn: 0,
+        totalBets: 0,
+        totalWinnings: 0,
+      });
+      console.log('✅ New user created:', user.walletAddress);
     }
 
     // Generate crash point
@@ -73,10 +93,24 @@ export async function POST(request: NextRequest) {
       status: 'waiting',
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Crash create API error:', error);
+    
+    // Provide more specific error messages
+    let errorMessage = 'Internal server error';
+    if (error?.message?.includes('MONGODB_URI')) {
+      errorMessage = 'Database configuration error. Please check environment variables.';
+    } else if (error?.message?.includes('connect')) {
+      errorMessage = 'Database connection failed. Please try again.';
+    } else if (error?.message) {
+      errorMessage = error.message;
+    }
+    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+      },
       { status: 500 }
     );
   }
