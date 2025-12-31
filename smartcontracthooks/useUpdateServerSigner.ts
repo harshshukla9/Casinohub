@@ -1,6 +1,8 @@
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { StatusL2Withdrawl } from '@/lib/contract';
-import { statusNetworkSepolia } from 'viem/chains';
+
+// Chain ID for Monad Testnet
+const MONAD_TESTNET_CHAIN_ID = 10143;
 
 /**
  * Hook to update the server signer address in the contract
@@ -18,7 +20,7 @@ export function useUpdateServerSigner() {
         abi: StatusL2Withdrawl.abi,
         functionName: 'updateServerSigner',
         args: [newSignerAddress as `0x${string}`],
-        chainId: statusNetworkSepolia.id,
+        chainId: MONAD_TESTNET_CHAIN_ID,
       });
 
       console.log('✅ Server signer update transaction submitted:', txHash);
@@ -53,7 +55,7 @@ export function useSetPaused() {
         abi: StatusL2Withdrawl.abi,
         functionName: 'setPaused',
         args: [paused],
-        chainId: statusNetworkSepolia.id,
+        chainId: MONAD_TESTNET_CHAIN_ID,
       });
 
       console.log('✅ Contract pause state updated:', txHash);
@@ -78,7 +80,7 @@ export function useSetPaused() {
 export function useWaitForUpdate(hash?: `0x${string}`) {
   const { data: receipt, isLoading, isSuccess, isError, error } = useWaitForTransactionReceipt({
     hash,
-    chainId: statusNetworkSepolia.id,
+    chainId: MONAD_TESTNET_CHAIN_ID,
     query: {
       enabled: !!hash,
     }

@@ -28,6 +28,7 @@ export function useUserBalance() {
       const response = await fetch(`/api/user-balance?walletAddress=${address}`)
       if (response.ok) {
         const data = await response.json()
+        console.log('useUserBalance - Fetched balance:', data.user?.balance)
         setUserBalance(data.user)
       } else {
         const errorData = await response.json()

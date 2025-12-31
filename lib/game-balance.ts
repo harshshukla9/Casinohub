@@ -105,6 +105,7 @@ export async function cashout(
     }
 
     // Dispatch event to update balance across the app
+    console.log('game-balance - Dispatching cashout events, newBalance:', data.newBalance)
     window.dispatchEvent(new CustomEvent('cashoutCompleted', { detail: data }))
     window.dispatchEvent(new CustomEvent('balanceUpdated', { detail: data }))
 

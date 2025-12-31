@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Reveal all cells
-    const gameDatas = currentGame.grid.map((mine, index) => ({
+    const gameDatas = currentGame.grid.map((mine: number, index: number) => ({
       point: index,
       mine: mine === 1 ? 'BOMB' : 'GEM',
       mined: true,

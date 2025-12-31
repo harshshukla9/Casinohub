@@ -57,7 +57,7 @@ export function WithdrawButton() {
       console.log('⏸️ Contract Paused:', isPaused)
     }
     if (contractBalance !== undefined) {
-      console.log('💰 Contract Balance:', formatUnits(contractBalance, 18), 'STT')
+      console.log('💰 Contract Balance:', formatUnits(contractBalance, 18), 'MCS')
     }
   }, [serverSigner, isPaused, contractBalance])
 
@@ -134,7 +134,7 @@ export function WithdrawButton() {
       if (isNaN(amountNum) || amountNum <= 0) {
         setError('Amount must be greater than 0')
       } else if (amountNum < MIN_WITHDRAWAL_AMOUNT) {
-        setError(`Minimum withdrawal is ${MIN_WITHDRAWAL_AMOUNT} STT`)
+        setError(`Minimum withdrawal is ${MIN_WITHDRAWAL_AMOUNT} MCS`)
       } else if (amountNum > userBalance) {
         setError('Insufficient balance')
       } else {
@@ -185,7 +185,7 @@ export function WithdrawButton() {
     
     // Final validation
     if (withdrawAmount < MIN_WITHDRAWAL_AMOUNT) {
-      setError(`Minimum withdrawal is ${MIN_WITHDRAWAL_AMOUNT} STT`)
+      setError(`Minimum withdrawal is ${MIN_WITHDRAWAL_AMOUNT} MCS`)
       return
     }
 
@@ -271,7 +271,7 @@ export function WithdrawButton() {
       }
 
       // Success message with details
-      setSuccessMessage(`✅ Withdrawal claimed successfully! ${withdrawAmount} STT transferred to your wallet.`)
+      setSuccessMessage(`✅ Withdrawal claimed successfully! ${withdrawAmount} MCS transferred to your wallet.`)
       
       // Refresh balance
       window.dispatchEvent(new CustomEvent('balanceUpdated'))
@@ -298,7 +298,7 @@ export function WithdrawButton() {
         onClick={openModal}
         className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-md hover:from-green-500 hover:to-emerald-500 transition-colors"
       >
-        Withdraw STT
+        Withdraw MCS
       </button>
 
       {/* Withdraw Modal */}
@@ -313,7 +313,7 @@ export function WithdrawButton() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-white">Withdraw STT</h2>
+              <h2 className="text-xl font-bold text-white">Withdraw MCS</h2>
               <button
                 onClick={closeModal}
                 className="text-white hover:text-gray-300 text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
@@ -326,7 +326,7 @@ export function WithdrawButton() {
             {/* Current Balance */}
             <div className="mb-4 p-3 bg-white/10 rounded">
               <p className="text-sm text-white/80">Available Balance</p>
-              <p className="text-lg font-semibold text-green-400">{userBalance.toFixed(4)} STT</p>
+              <p className="text-lg font-semibold text-green-400">{userBalance.toFixed(4)} MCS</p>
             </div>
 
             {/* Contract Status Info */}
@@ -339,7 +339,7 @@ export function WithdrawButton() {
                 )}
                 {contractBalance !== undefined && contractBalance < BigInt(1e18) && (
                   <p className="text-sm text-red-400">
-                    ⚠️ Contract has insufficient balance: {formatUnits(contractBalance, 18)} STT
+                    ⚠️ Contract has insufficient balance: {formatUnits(contractBalance, 18)} MCS
                   </p>
                 )}
               </div>
@@ -354,7 +354,7 @@ export function WithdrawButton() {
                   Amount
                 </label>
                 <p className="text-sm text-white/60">
-                  (Min: {MIN_WITHDRAWAL_AMOUNT} STT)
+                  (Min: {MIN_WITHDRAWAL_AMOUNT} MCS)
                 </p>
               </div>
               <input
@@ -402,7 +402,7 @@ export function WithdrawButton() {
                   {withdrawalData.withdrawals.slice(0, 3).map((w) => (
                     <div key={w._id} className="p-2 bg-white/5 rounded text-xs">
                       <div className="flex justify-between items-center">
-                        <span className="text-white">{w.amount.toFixed(4)} STT</span>
+                        <span className="text-white">{w.amount.toFixed(4)} MCS</span>
                         <span className={`px-2 py-0.5 rounded ${
                           w.status === 'completed' ? 'bg-green-900/50 text-green-300' :
                           w.status === 'pending' ? 'bg-yellow-900/50 text-yellow-300' :

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ExpolitionBombSvg, JewlSvg } from "@/components/svgs";
-import { MINE_OBJECT, MineArea, MineButtonProps } from "./types";
+import { MINE_OBJECT, MineArea, MineButtonProps } from "@/components/games/Mine/types";
 
 
 

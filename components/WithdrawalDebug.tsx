@@ -71,7 +71,7 @@ export function WithdrawalDebug() {
         </div>
 
         <div className="flex justify-between">
-          <span className="text-white/60">Token (STT):</span>
+          <span className="text-white/60">Token (MCS):</span>
           <span className="text-white font-mono text-[10px]">
             {STT_TOKEN_ADDRESS.slice(0, 6)}...{STT_TOKEN_ADDRESS.slice(-4)}
           </span>
@@ -107,7 +107,7 @@ export function WithdrawalDebug() {
             <span className="text-white/40">Loading...</span>
           ) : contractBalance !== undefined ? (
             <span className={Number(formatUnits(contractBalance, 18)) > 10 ? 'text-green-400' : 'text-red-400'}>
-              {formatUnits(contractBalance, 18)} STT
+              {formatUnits(contractBalance, 18)} MCS
             </span>
           ) : (
             <span className="text-white/40">Unknown</span>

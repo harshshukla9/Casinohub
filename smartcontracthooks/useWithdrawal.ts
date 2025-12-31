@@ -5,8 +5,8 @@ import { useAccount, useWalletClient, usePublicClient, useReadContract } from 'w
 import { StatusL2Withdrawl, STT_TOKEN_ADDRESS } from '@/lib/contract'
 import { parseUnits } from 'viem'
 
-// Chain ID for Status Network Sepolia (from @reown/appkit/networks)
-const STATUS_NETWORK_SEPOLIA_CHAIN_ID = 1660990954
+// Chain ID for Monad Testnet
+const MONAD_TESTNET_CHAIN_ID = 10143
 
 /**
  * Hook to get user's current nonce
@@ -19,7 +19,7 @@ export function useUserNonce() {
     abi: StatusL2Withdrawl.abi,
     functionName: 'getUserNonce',
     args: address ? [address] : undefined,
-    chainId: STATUS_NETWORK_SEPOLIA_CHAIN_ID,
+    chainId: MONAD_TESTNET_CHAIN_ID,
     query: {
       enabled: !!address,
     }
@@ -41,7 +41,7 @@ export function useIsSignatureUsed(signature?: `0x${string}`) {
     abi: StatusL2Withdrawl.abi,
     functionName: 'isSignatureUsed',
     args: signature ? [signature] : undefined,
-    chainId: STATUS_NETWORK_SEPOLIA_CHAIN_ID,
+    chainId: MONAD_TESTNET_CHAIN_ID,
     query: {
       enabled: !!signature,
     }
@@ -62,7 +62,7 @@ export function useWithdrawalContractBalance() {
     abi: StatusL2Withdrawl.abi,
     functionName: 'getTokenBalance',
     args: [STT_TOKEN_ADDRESS],
-    chainId: STATUS_NETWORK_SEPOLIA_CHAIN_ID,
+    chainId: MONAD_TESTNET_CHAIN_ID,
   })
 
   return {
@@ -203,7 +203,7 @@ export function useVerifySignature(
     args: amount && nonce !== undefined && signature
       ? [STT_TOKEN_ADDRESS as `0x${string}`, parseUnits(amount, 18), nonce, signature]
       : undefined,
-    chainId: STATUS_NETWORK_SEPOLIA_CHAIN_ID,
+    chainId: MONAD_TESTNET_CHAIN_ID,
     query: {
       enabled: !!amount && nonce !== undefined && !!signature,
     }

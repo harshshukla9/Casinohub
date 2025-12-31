@@ -58,14 +58,14 @@ export async function POST(request: NextRequest) {
 
     if (gameEnded) {
       gameStatus = 'END';
-      gameDatas = currentGame.grid.map((mine, index) => ({
+      gameDatas = currentGame.grid.map((mine: number, index: number) => ({
         point: index,
         mine: mine === 1 ? 'BOMB' : 'GEM',
         mined: true,
       }));
       activeGames.delete(gameId);
     } else {
-      gameDatas = currentGame.grid.map((mine, index) => ({
+      gameDatas = currentGame.grid.map((mine: number, index: number) => ({
         point: index,
         mine: currentGame.revealed[index] ? (mine === 1 ? 'BOMB' : 'GEM') : null,
         mined: currentGame.revealed[index],
@@ -73,13 +73,13 @@ export async function POST(request: NextRequest) {
 
       // Check if all safe cells are revealed
       const totalSafeCells = 25 - currentGame.mines;
-      const revealedSafeCells = currentGame.revealed.filter((revealed, index) =>
+      const revealedSafeCells = currentGame.revealed.filter((revealed: boolean, index: number) =>
         revealed && currentGame.grid[index] === 0
       ).length;
 
       if (revealedSafeCells === totalSafeCells) {
         gameStatus = 'END';
-        gameDatas = currentGame.grid.map((mine, index) => ({
+        gameDatas = currentGame.grid.map((mine: number, index: number) => ({
           point: index,
           mine: mine === 1 ? 'BOMB' : 'GEM',
           mined: true,

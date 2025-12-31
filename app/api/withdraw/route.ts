@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
     // Validation: Minimum withdrawal amount
     if (withdrawAmount < MIN_WITHDRAWAL_AMOUNT) {
       return NextResponse.json(
-        { error: `Minimum withdrawal amount is ${MIN_WITHDRAWAL_AMOUNT} STT` },
+        { error: `Minimum withdrawal amount is ${MIN_WITHDRAWAL_AMOUNT} MCS` },
         { status: 400 }
       );
     }

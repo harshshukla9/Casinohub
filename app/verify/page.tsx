@@ -126,7 +126,7 @@ function VerifyContent() {
               </div>
               <div>
                 <span className="text-gray-400">Bet Amount:</span>
-                <div className="text-white mt-1">{bet ? `${bet} STT` : 'N/A'}</div>
+                <div className="text-white mt-1">{bet ? `${bet} MCS` : 'N/A'}</div>
               </div>
             </div>
           </div>

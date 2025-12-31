@@ -183,7 +183,7 @@ export function DepositButton() {
         refetchDeposits()
         window.dispatchEvent(new CustomEvent('depositCompleted'))
         window.dispatchEvent(new CustomEvent('balanceUpdated'))
-        setSuccessMessage(`Deposit successful! Amount: ${amount} STT`)
+        setSuccessMessage(`Deposit successful! Amount: ${amount} MCS`)
         setTimeout(() => {
           setSuccessMessage('')
           setIsModalOpen(false)
@@ -214,7 +214,7 @@ export function DepositButton() {
       return
     }
     if (parseFloat(depositAmount) > walletBalance) {
-      setDepositError('You do not have enough STT tokens')
+      setDepositError('You do not have enough MCS tokens')
       setTimeout(() => setDepositError(''), 3000)
       return
     }
@@ -272,7 +272,7 @@ export function DepositButton() {
 
     const amount = parseFloat(withdrawAmount)
     if (amount < MIN_WITHDRAWAL_AMOUNT) {
-      setWithdrawError(`Minimum withdrawal is ${MIN_WITHDRAWAL_AMOUNT} STT`)
+      setWithdrawError(`Minimum withdrawal is ${MIN_WITHDRAWAL_AMOUNT} MCS`)
       return
     }
     if (amount > userBalance) {
@@ -367,7 +367,7 @@ export function DepositButton() {
         // Step 3: Update UI
         window.dispatchEvent(new CustomEvent('balanceUpdated'))
 
-        setSuccessMessage(`✅ Withdrawal successful! ${amount} STT sent to your wallet.`)
+        setSuccessMessage(`✅ Withdrawal successful! ${amount} MCS sent to your wallet.`)
         setTimeout(() => {
           setSuccessMessage('')
           setIsModalOpen(false)
@@ -393,7 +393,7 @@ export function DepositButton() {
       if (isNaN(amountNum) || amountNum <= 0) {
         setDepositError('Amount must be greater than 0')
       } else if (amountNum > walletBalance) {
-        setDepositError('You do not have enough STT tokens')
+        setDepositError('You do not have enough MCS tokens')
       } else {
         setDepositError('')
       }
@@ -410,7 +410,7 @@ export function DepositButton() {
       if (isNaN(amountNum) || amountNum <= 0) {
         setWithdrawError('Amount must be greater than 0')
       } else if (amountNum < MIN_WITHDRAWAL_AMOUNT) {
-        setWithdrawError(`Minimum withdrawal is ${MIN_WITHDRAWAL_AMOUNT} STT`)
+        setWithdrawError(`Minimum withdrawal is ${MIN_WITHDRAWAL_AMOUNT} MCS`)
       } else if (amountNum > userBalance) {
         setWithdrawError('Insufficient balance')
       } else {
@@ -459,7 +459,7 @@ export function DepositButton() {
         onClick={openModal}
         className="w-full bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
       >
-        Deposit / Withdraw STT
+        Deposit / Withdraw MCS
       </button>
       {isModalOpen && isMounted && createPortal(
         <div
@@ -474,7 +474,7 @@ export function DepositButton() {
               <div>
                 <p className="text-sm text-white/60">Wallet actions</p>
                 <h2 className="text-2xl font-semibold text-white">
-                  {activeTab === 'deposit' ? 'Deposit STT' : 'Withdraw STT'}
+                  {activeTab === 'deposit' ? 'Deposit MCS' : 'Withdraw MCS'}
                 </h2>
               </div>
               <button
@@ -518,10 +518,10 @@ export function DepositButton() {
                 <div className="p-4 rounded-lg bg-white/10 border border-white/20 flex items-center justify-between">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-white/60 mb-1">Current Deposits</p>
-                    <p className="text-lg font-semibold text-white">{contractDeposits} STT</p>
+                    <p className="text-lg font-semibold text-white">{contractDeposits} MCS</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs uppercase tracking-wide text-white/60 mb-1">STT Token Balance</p>
+                    <p className="text-xs uppercase tracking-wide text-white/60 mb-1">MCS Token Balance</p>
                     <p className="text-lg font-mono text-white">
                       {isLoadingTokenBalance ? 'Loading...' : walletBalance.toFixed(4)}
                     </p>
@@ -556,7 +556,7 @@ export function DepositButton() {
                     ) : amountNeedsApproval && amountNeedsApproval(depositAmount) ? (
                       <div className="space-y-2">
                         <p className="text-sm text-yellow-400">
-                          ⚠️ Approval required: You need to approve {depositAmount} STT tokens before depositing
+                          ⚠️ Approval required: You need to approve {depositAmount} MCS tokens before depositing
                         </p>
                         <div className="flex gap-2">
                           <button
@@ -564,7 +564,7 @@ export function DepositButton() {
                             disabled={isApproving || isApprovingMax}
                             className="flex-1 py-2 px-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                           >
-                            {isApproving ? 'Approving...' : `Approve ${depositAmount} STT`}
+                            {isApproving ? 'Approving...' : `Approve ${depositAmount} MCS`}
                           </button>
                           <button
                             onClick={handleApproveMax}
@@ -580,7 +580,7 @@ export function DepositButton() {
                       </div>
                     ) : (
                       <p className="text-sm text-green-400 break-words">
-                        ✅ You have sufficient approval ({formatAllowance(allowance || '0', allowanceWei || BigInt(0))} STT approved)
+                        ✅ You have sufficient approval ({formatAllowance(allowance || '0', allowanceWei || BigInt(0))} MCS approved)
                       </p>
                     )}
                   </div>
@@ -629,9 +629,9 @@ export function DepositButton() {
                   {isLoadingUserBalance ? (
                     <p className="text-lg font-semibold text-white/40">Loading...</p>
                   ) : (
-                    <p className="text-lg font-semibold text-white">{userBalance.toFixed(4)} STT</p>
+                    <p className="text-lg font-semibold text-white">{userBalance.toFixed(4)} MCS</p>
                   )}
-                  <p className="text-xs text-white/60 mt-1">Minimum withdrawal {MIN_WITHDRAWAL_AMOUNT} STT</p>
+                  <p className="text-xs text-white/60 mt-1">Minimum withdrawal {MIN_WITHDRAWAL_AMOUNT} MCS</p>
                 </div>
 
                 {!isLoadingWithdrawalHistory && withdrawalData && !withdrawalData.canWithdraw && (
@@ -668,7 +668,7 @@ export function DepositButton() {
                       {withdrawalData.withdrawals.slice(0, 3).map((w) => (
                         <div key={w._id} className="p-2.5 bg-white/10 rounded-lg text-xs border border-white/20">
                           <div className="flex justify-between items-center">
-                            <span className="text-white font-medium">{w.amount.toFixed(4)} STT</span>
+                            <span className="text-white font-medium">{w.amount.toFixed(4)} MCS</span>
                             <span
                               className={`px-2 py-0.5 rounded capitalize text-xs ${w.status === 'completed'
                                 ? 'bg-green-500/20 text-green-300'

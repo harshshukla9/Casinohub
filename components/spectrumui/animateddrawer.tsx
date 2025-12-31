@@ -123,12 +123,36 @@ export const AnimatedDrawer = () => {
     }
   }, [address]);
 
+  // Refetch balance whenever drawer opens
   useEffect(() => {
-    if (isOpen && view === 'withdraw') {
+    if (isOpen) {
       refetchUserBalance();
-      fetchWithdrawalHistory();
+      refetchTokenBalance();
+      if (view === 'withdraw') {
+        fetchWithdrawalHistory();
+      }
     }
-  }, [isOpen, view, refetchUserBalance, fetchWithdrawalHistory]);
+  }, [isOpen, view, refetchUserBalance, refetchTokenBalance, fetchWithdrawalHistory]);
+
+  // Also listen for balance updates from games
+  useEffect(() => {
+    const handleBalanceUpdate = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      console.log('AnimatedDrawer - Balance update event received:', detail);
+      console.log('AnimatedDrawer - Current balance before refetch:', userBalanceFromHook);
+      refetchUserBalance();
+    };
+
+    window.addEventListener('balanceUpdated', handleBalanceUpdate);
+    window.addEventListener('betPlaced', handleBalanceUpdate);
+    window.addEventListener('cashoutCompleted', handleBalanceUpdate);
+
+    return () => {
+      window.removeEventListener('balanceUpdated', handleBalanceUpdate);
+      window.removeEventListener('betPlaced', handleBalanceUpdate);
+      window.removeEventListener('cashoutCompleted', handleBalanceUpdate);
+    };
+  }, [refetchUserBalance, userBalanceFromHook]);
 
   const { deposit, isLoading: isDepositing, isConfirmed, amountNeedsApproval } = useDeposit({
     onSuccess: async (txHash) => {
@@ -161,7 +185,7 @@ export const AnimatedDrawer = () => {
         refetchDeposits();
         window.dispatchEvent(new CustomEvent('depositCompleted'));
         window.dispatchEvent(new CustomEvent('balanceUpdated'));
-        setSuccessMessage(`Deposit successful! ${amount} STT`);
+        setSuccessMessage(`Deposit successful! ${amount} MCS`);
         setTimeout(() => {
           setSuccessMessage('');
           setView('default');
@@ -192,7 +216,7 @@ export const AnimatedDrawer = () => {
       return;
     }
     if (parseFloat(depositAmount) > walletBalance) {
-      setDepositError('Insufficient STT tokens');
+      setDepositError('Insufficient MCS tokens');
       setTimeout(() => setDepositError(''), 3000);
       return;
     }
@@ -241,7 +265,7 @@ export const AnimatedDrawer = () => {
       if (isNaN(amountNum) || amountNum <= 0) {
         setDepositError('Amount must be greater than 0');
       } else if (amountNum > walletBalance) {
-        setDepositError('You do not have enough STT tokens');
+        setDepositError('You do not have enough MCS tokens');
       } else {
         setDepositError('');
       }
@@ -258,7 +282,7 @@ export const AnimatedDrawer = () => {
       if (isNaN(amountNum) || amountNum <= 0) {
         setWithdrawError('Amount must be greater than 0');
       } else if (amountNum < MIN_WITHDRAWAL_AMOUNT) {
-        setWithdrawError(`Minimum withdrawal is ${MIN_WITHDRAWAL_AMOUNT} STT`);
+        setWithdrawError(`Minimum withdrawal is ${MIN_WITHDRAWAL_AMOUNT} MCS`);
       } else if (amountNum > userBalanceFromHook) {
         setWithdrawError('Insufficient balance');
       } else {
@@ -280,7 +304,7 @@ export const AnimatedDrawer = () => {
     }
     const amount = parseFloat(withdrawAmount);
     if (amount < MIN_WITHDRAWAL_AMOUNT) {
-      setWithdrawError(`Minimum withdrawal is ${MIN_WITHDRAWAL_AMOUNT} STT`);
+      setWithdrawError(`Minimum withdrawal is ${MIN_WITHDRAWAL_AMOUNT} MCS`);
       return;
     }
     if (amount > userBalanceFromHook) {
@@ -345,7 +369,7 @@ export const AnimatedDrawer = () => {
         }
 
         window.dispatchEvent(new CustomEvent('balanceUpdated'));
-        setSuccessMessage(`Withdrawal successful! ${amount} STT`);
+        setSuccessMessage(`Withdrawal successful! ${amount} MCS`);
         setTimeout(() => {
           setSuccessMessage('');
           setView('default');
@@ -402,8 +426,8 @@ export const AnimatedDrawer = () => {
                 <div className="w-6 h-6">
                   <Image src="/impAssets/Chip.webp" alt="Chips" width={20} height={20} className='w-full h-full object-cover' />
                 </div>
-                <span className='bg-neutral-100 px-2 rounded-xs dark:bg-neutral-800 absolute text-sm -top-3 left-6 z-10'>Assets</span>
-                {contractDeposits || 0}
+                <span className='bg-neutral-100 px-2 rounded-xs dark:bg-neutral-800 absolute text-sm -top-3 left-6 z-10'>Game Balance</span>
+                {userBalanceFromHook.toFixed(2)} MCS
               </button>
               <div className='flex w-full gap-4 justify-between'>
                 <button
@@ -495,7 +519,7 @@ export const AnimatedDrawer = () => {
             <div className="border-t border-neutral-200 dark:border-neutral-700 space-y-5 text-neutral-500 dark:text-neutral-400 text-lg">
               <div className="flex items-center gap-4 mt-5">
                 <Info />
-                <h3>Wallet: {isLoadingTokenBalance ? 'Loading...' : walletBalance.toFixed(4)} STT</h3>
+                <h3>Wallet: {isLoadingTokenBalance ? 'Loading...' : walletBalance.toFixed(4)} MCS</h3>
               </div>
               <div>
                 <input
@@ -575,7 +599,7 @@ export const AnimatedDrawer = () => {
             <div className="border-t border-neutral-200 dark:border-neutral-700 space-y-5 text-neutral-500 dark:text-neutral-400 text-lg">
               <div className="flex items-center gap-4 mt-5">
                 <Info />
-                <h3>Balance: {userBalanceFromHook.toFixed(4)} STT</h3>
+                <h3>Balance: {userBalanceFromHook.toFixed(4)} MCS</h3>
               </div>
               {!isLoadingWithdrawalHistory && withdrawalData && !withdrawalData.canWithdraw && (
                 <div className="p-3 rounded-lg bg-yellow-500/20 border border-yellow-400/30 text-yellow-600 dark:text-yellow-400 text-sm">

@@ -69,7 +69,7 @@ export function UserBalanceDisplay() {
               <span className="text-white/40">Loading...</span>
             ) : (
               <span className="text-white">
-                {Number(userBalance?.balance || 0).toFixed(2)} STT
+                {Number(userBalance?.balance || 0).toFixed(2)} MCS
               </span>
             )}
           </div>

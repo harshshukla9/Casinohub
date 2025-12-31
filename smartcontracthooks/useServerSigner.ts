@@ -1,8 +1,8 @@
 import { useReadContract } from 'wagmi';
 import { StatusL2Withdrawl } from '@/lib/contract';
 
-// Chain ID for Status Network Sepolia (from @reown/appkit/networks)
-const STATUS_NETWORK_SEPOLIA_CHAIN_ID = 1660990954;
+// Chain ID for Monad Testnet
+const MONAD_TESTNET_CHAIN_ID = 10143;
 
 /**
  * Hook to get the server signer address from the contract
@@ -14,7 +14,7 @@ export function useServerSigner() {
     address: StatusL2Withdrawl.contractAddress as `0x${string}`,
     abi: StatusL2Withdrawl.abi,
     functionName: 'serverSigner',
-    chainId: STATUS_NETWORK_SEPOLIA_CHAIN_ID,
+    chainId: MONAD_TESTNET_CHAIN_ID,
   });
 
   return {
@@ -32,7 +32,7 @@ export function useContractPaused() {
     address: StatusL2Withdrawl.contractAddress as `0x${string}`,
     abi: StatusL2Withdrawl.abi,
     functionName: 'paused',
-    chainId: STATUS_NETWORK_SEPOLIA_CHAIN_ID,
+    chainId: MONAD_TESTNET_CHAIN_ID,
   });
 
   return {

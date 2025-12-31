@@ -101,14 +101,14 @@ export function CasinoVaultExample() {
       {/* Vault Info */}
       <div className="bg-gray-100 p-4 rounded-lg">
         <h2 className="text-xl font-semibold mb-2">Vault Information</h2>
-        <p>Balance: {isLoadingBalance ? 'Loading...' : `${vaultBalance || '0'} STT`}</p>
+        <p>Balance: {isLoadingBalance ? 'Loading...' : `${vaultBalance || '0'} MCS`}</p>
         <p>Owner: {isLoadingOwner ? 'Loading...' : (owner ? String(owner) : 'Unknown')}</p>
       </div>
 
       {/* Player Deposits */}
       <div className="bg-blue-100 p-4 rounded-lg">
         <h2 className="text-xl font-semibold mb-2">Your Deposits</h2>
-        <p>Total Deposits: {isLoadingDeposits ? 'Loading...' : `${playerDeposits} STT`}</p>
+        <p>Total Deposits: {isLoadingDeposits ? 'Loading...' : `${playerDeposits} MCS`}</p>
         <button
           onClick={() => refetchDeposits()}
           className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -125,7 +125,7 @@ export function CasinoVaultExample() {
             type="number"
             value={depositAmount}
             onChange={(e) => setDepositAmount(e.target.value)}
-            placeholder="Amount in STT"
+            placeholder="Amount in MCS"
             className="flex-1 px-3 py-2 border rounded"
             step="0.001"
             min="0"
@@ -154,7 +154,7 @@ export function CasinoVaultExample() {
                 type="number"
                 value={fundAmount}
                 onChange={(e) => setFundAmount(e.target.value)}
-                placeholder="Amount in STT"
+                placeholder="Amount in MCS"
                 className="flex-1 px-3 py-2 border rounded"
                 step="0.001"
                 min="0"

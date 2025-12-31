@@ -139,7 +139,7 @@ export function DepositComponent() {
       <div className="mb-4 p-3 bg-gray-100 rounded">
         <p className="text-sm text-gray-600">Vault Balance</p>
         <p className="text-lg font-semibold">
-          {isLoadingBalance ? 'Loading...' : `${balance || '0'} STT`}
+          {isLoadingBalance ? 'Loading...' : `${balance || '0'} MCS`}
         </p>
       </div>
 
@@ -147,22 +147,22 @@ export function DepositComponent() {
       <div className="mb-4 p-3 bg-blue-100 rounded">
         <p className="text-sm text-gray-600">Your Deposits</p>
         <p className="text-lg font-semibold">
-          {isLoadingDeposits ? 'Loading...' : `${deposits} STT`}
+          {isLoadingDeposits ? 'Loading...' : `${deposits} MCS`}
         </p>
       </div>
 
       {/* Token Balance */}
       <div className="mb-4 p-3 bg-green-100 rounded">
-        <p className="text-sm text-gray-600">Your STT Token Balance</p>
+        <p className="text-sm text-gray-600">Your MCS Token Balance</p>
         <p className="text-lg font-semibold">
-          {isLoadingTokenBalance ? 'Loading...' : `${tokenBalance || '0'} STT`}
+          {isLoadingTokenBalance ? 'Loading...' : `${tokenBalance || '0'} MCS`}
         </p>
       </div>
 
       {/* Deposit Form */}
       <div className="mb-4">
         <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
-          Deposit Amount (STT)
+          Deposit Amount (MCS)
         </label>
         <input
           id="amount"
@@ -184,7 +184,7 @@ export function DepositComponent() {
           ) : amountNeedsApproval && amountNeedsApproval(amount) ? (
             <div className="space-y-2">
               <p className="text-sm text-yellow-800">
-                ⚠️ Approval required: You need to approve {amount} STT tokens before depositing
+                ⚠️ Approval required: You need to approve {amount} MCS tokens before depositing
               </p>
               <div className="flex gap-2">
                 <button
@@ -192,7 +192,7 @@ export function DepositComponent() {
                   disabled={isApproving || isApprovingMax}
                   className="flex-1 py-2 px-3 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                 >
-                  {isApproving ? 'Approving...' : `Approve ${amount} STT`}
+                  {isApproving ? 'Approving...' : `Approve ${amount} MCS`}
                 </button>
                 <button
                   onClick={handleApproveMax}
@@ -208,7 +208,7 @@ export function DepositComponent() {
             </div>
           ) : (
             <p className="text-sm text-green-600 break-words">
-              ✅ You have sufficient approval ({formatAllowance(allowance || '0', allowanceWei || BigInt(0))} STT approved)
+              ✅ You have sufficient approval ({formatAllowance(allowance || '0', allowanceWei || BigInt(0))} MCS approved)
             </p>
           )}
         </div>

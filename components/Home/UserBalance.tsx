@@ -75,7 +75,7 @@ export function UserBalance() {
         <div className="bg-blue-100 p-3 rounded">
           <p className="text-sm text-gray-600">Smart Contract</p>
           <p className="text-lg font-semibold">
-            {isLoadingContract ? 'Loading...' : `${contractDeposits} STT`}
+            {isLoadingContract ? 'Loading...' : `${contractDeposits} MCS`}
           </p>
         </div>
 
@@ -83,7 +83,7 @@ export function UserBalance() {
         <div className="bg-green-100 p-3 rounded">
           <p className="text-sm text-gray-600">Balance</p>
           <p className="text-lg font-semibold">
-            {isLoading ? 'Loading...' : `${userBalance?.balance || 0}.toFixed(2) STT`}
+            {isLoading ? 'Loading...' : `${userBalance?.balance || 0}.toFixed(2) MCS`}
           </p>
         </div>
 
@@ -91,7 +91,7 @@ export function UserBalance() {
         <div className="bg-purple-100 p-3 rounded">
           <p className="text-sm text-gray-600">Total Deposited</p>
           <p className="text-lg font-semibold">
-            {isLoading ? 'Loading...' : `${userBalance?.totalDeposited || 0} STT`}
+            {isLoading ? 'Loading...' : `${userBalance?.totalDeposited || 0} MCS`}
           </p>
         </div>
       </div>

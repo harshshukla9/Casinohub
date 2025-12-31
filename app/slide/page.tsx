@@ -257,17 +257,42 @@ const SlideGame = () => {
 
         const won = targetNum > 0 && chosenMultiplierNum >= targetNum;
 
+        console.log('=== SLIDE GAME END ===');
+        console.log('Chosen Multiplier:', chosenMultiplierNum);
+        console.log('Target:', targetNum);
+        console.log('Won:', won);
+        console.log('Address:', address);
+        console.log('SavedBet:', savedBet.current);
+
         if (address && savedBet.current) {
             if (won) {
                 const payoutMultiplier = targetNum;
                 const betAmountNum = Number(savedBet.current.betAmount);
 
+                console.log('Processing WIN - Calling cashout with:', {
+                    address,
+                    betAmount: betAmountNum,
+                    multiplier: payoutMultiplier,
+                    expectedWinnings: betAmountNum * payoutMultiplier
+                });
+
                 const cashoutResult = await cashoutBalance(address, betAmountNum, payoutMultiplier);
 
+                console.log('Cashout Result:', cashoutResult);
+
                 if (!cashoutResult.success) {
+                    console.error('Cashout FAILED:', cashoutResult.error);
                     alert("Failed to process winnings: " + cashoutResult.error);
+                } else {
+                    console.log('Cashout SUCCESS! New balance:', cashoutResult.newBalance);
+                    // Dispatch event to refresh balance
+                    window.dispatchEvent(new CustomEvent('balanceUpdated'));
                 }
+            } else {
+                console.log('Player LOST - No cashout needed');
             }
+        } else {
+            console.log('No address or savedBet - skipping cashout');
         }
 
         addGameToHistory({

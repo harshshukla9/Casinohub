@@ -81,13 +81,13 @@ export const GameStats = () => {
         
         <div className="flex justify-between items-center">
           <span className="text-gray-400 text-sm">Current Payout</span>
-          <span className="text-white font-semibold">{currentPayout.toFixed(2)} STT</span>
+          <span className="text-white font-semibold">{currentPayout.toFixed(2)} MCS</span>
         </div>
         
         <div className="flex justify-between items-center">
           <span className="text-gray-400 text-sm">Profit</span>
           <span className={`font-semibold ${potentialProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {potentialProfit >= 0 ? '+' : ''}{potentialProfit.toFixed(2)} STT
+            {potentialProfit >= 0 ? '+' : ''}{potentialProfit.toFixed(2)} MCS
           </span>
         </div>
       </div>
@@ -131,7 +131,7 @@ export const GameStats = () => {
           <div className="text-center">
             <div className="text-sm font-bold text-white mb-1">Max Potential</div>
             <div className="text-lg font-bold text-purple-300">
-              {(betAmount * Math.pow(config.baseMultiplier, config.totalTiles)).toFixed(2)} STT
+              {(betAmount * Math.pow(config.baseMultiplier, config.totalTiles)).toFixed(2)} MCS
             </div>
             <div className="text-xs text-purple-200">
               {Math.pow(config.baseMultiplier, config.totalTiles).toFixed(2)}x

@@ -328,16 +328,11 @@ const CrashGame = () => {
                     cashedOutRef.current = true;
                     cashedOutMultiplierRef.current = finalMultiplier;
 
-                    if (gameIntervalRef.current) {
-                        clearInterval(gameIntervalRef.current);
-                        gameIntervalRef.current = null;
-                    }
-
-                    setGameState(GAME_STATES.Over);
-                    setBetting(false);
+                    // Don't stop the game - let it continue until crash point
+                    // The game will naturally end when it reaches crashPointRef.current
                     setLoading(false);
 
-                    console.log("✅ Cashed out at", finalMultiplier + "x", "Game reset for next round");
+                    console.log("✅ Cashed out at", finalMultiplier + "x", "Game will continue until crash point");
                 } else {
                     console.error("Cashout balance error:", cashoutResult);
                     alert(cashoutResult.error || "Failed to add winnings to balance");
@@ -425,7 +420,7 @@ const CrashGame = () => {
 
                                             <div className="flex flex-col items-center">
                                                 <span className="text-[10px] text-gray-600 font-medium uppercase tracking-wider">
-                                                    {crashed && !cashedOut ? "Crashed @" : cashedOut ? "Cashed @" : "Multiplier"}
+                                                    {crashed && !cashedOut ? "Crashed @" : cashedOut ? "Current (Cashed @" : "Multiplier"}
                                                 </span>
                                                 <motion.div
                                                     animate={{
@@ -437,11 +432,18 @@ const CrashGame = () => {
                                                 >
                                                     {crashed && !cashedOut
                                                         ? `${crashPointRef.current.toFixed(2)}x`
-                                                        : cashedOut
-                                                            ? `${cashedOutMultiplier.toFixed(2)}x`
-                                                            : `${payout.toFixed(2)}x`
+                                                        : `${payout.toFixed(2)}x`
                                                     }
                                                 </motion.div>
+                                                {cashedOut && gameState === GAME_STATES.InProgress && (
+                                                    <motion.span
+                                                        initial={{ opacity: 0, y: -5 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        className="text-[9px] text-emerald-600 font-semibold mt-1"
+                                                    >
+                                                        Cashed @ {cashedOutMultiplier.toFixed(2)}x
+                                                    </motion.span>
+                                                )}
                                             </div>
 
                                             <div className="flex flex-col items-end">
@@ -466,11 +468,11 @@ const CrashGame = () => {
                                                     </motion.span>
                                                     <Image src="/impAssets/Chip.webp" alt="coin" width={18} height={18} />
                                                 </div>
-                                                {cashedOut && gameState === GAME_STATES.Over && (
+                                                {cashedOut && (gameState === GAME_STATES.Over || gameState === GAME_STATES.InProgress) && (
                                                     <motion.span
                                                         initial={{ opacity: 0, y: -5 }}
                                                         animate={{ opacity: 1, y: 0 }}
-                                                        className="text-[9px] text-amber-600 font-semibold mt-0.5"
+                                                        className="text-[9px] text-emerald-600 font-semibold mt-0.5"
                                                     >
                                                         Safe! 🎉
                                                     </motion.span>

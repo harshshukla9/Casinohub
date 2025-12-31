@@ -1,6 +1,6 @@
 import axiosServices from "@/util/axios";
 import { useCallback, useEffect, useState } from "react";
-import Modal from "./Modal";
+import Modal from "@/components/shared/Modal";
 import { Button } from "@/components/ui/button";
 
 

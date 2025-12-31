@@ -207,7 +207,7 @@ export const findTile = (number: number): any => {
         const src = srcMap[hex];
         if (!src) return null;
 
-        const img = new Image();
+        const img = new window.Image();
         img.src = src;
         return img;
     };

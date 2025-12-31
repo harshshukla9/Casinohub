@@ -239,13 +239,18 @@ const MineGame: React.FC = () => {
 
                 if (!hasBomb) {
                     // Won - add winnings
+                    console.log('Mine Auto-Win - Cashing out:', { betAmount, multiplier: profitAndOdds.probability });
                     const cashoutResult = await cashoutBalance(address?.toString() || "", betAmount, profitAndOdds.probability);
+                    console.log('Mine Auto-Win - Cashout result:', cashoutResult);
                     if (cashoutResult.success) {
+                        console.log('Mine Auto-Win - New balance:', cashoutResult.newBalance);
                         setResult({
                             odds: profitAndOdds.probability,
                             profit: profitAndOdds.roundedWinAmount,
                         });
                         setResultVisible(true);
+                    } else {
+                        console.error('Mine Auto-Win - Cashout failed:', cashoutResult.error);
                     }
                 }
 
@@ -275,14 +280,20 @@ const MineGame: React.FC = () => {
             // Calculate winnings based on current picks
             const multiplier = profitAndOdds.probability;
             const winnings = profitAndOdds.roundedWinAmount;
+            
+            console.log('Mine Cashout - Starting cashout:', { multiplier, winnings, betAmount });
 
             // Add winnings to balance using unified API
             const cashoutResult = await cashoutBalance(address, betAmount, multiplier);
+            console.log('Mine Cashout - Cashout result:', cashoutResult);
+            
             if (!cashoutResult.success) {
                 alert(cashoutResult.error || "Failed to cashout");
                 setLoading(false);
                 return;
             }
+
+            console.log('Mine Cashout - Balance updated, newBalance:', cashoutResult.newBalance);
 
             // Then process game cashout
             const { data } = await axiosServices.post(`${MINE_API}/cashout`, {
@@ -303,7 +314,9 @@ const MineGame: React.FC = () => {
                 setStatus(GAME_STATUS.READY);
                 setResultVisible(true);
             } else checkActiveGame();
-        } catch (error) { }
+        } catch (error) {
+            console.error('Mine Cashout - Error:', error);
+        }
         setLoading(false);
     };
 

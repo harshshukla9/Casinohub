@@ -404,7 +404,7 @@ export const GameBoard = () => {
             <div className="text-center">
               <div className="text-xl font-bold text-white mb-2">Game Over!</div>
               <div className="text-sm text-white/80">
-                You lost {betAmount.toFixed(2)} STT
+                You lost {betAmount.toFixed(2)} MCS
               </div>
             </div>
           </motion.div>
@@ -430,10 +430,10 @@ export const GameBoard = () => {
             <div className="text-center">
               <div className="text-xl font-bold text-white mb-2">Cashed Out!</div>
               <div className="text-sm text-white/80">
-                You won {(betAmount * multiplier).toFixed(2)} STT
+                You won {(betAmount * multiplier).toFixed(2)} MCS
               </div>
               <div className="text-xs text-white/60 mt-1">
-                Profit: +{(betAmount * (multiplier - 1)).toFixed(2)} STT
+                Profit: +{(betAmount * (multiplier - 1)).toFixed(2)} MCS
               </div>
             </div>
           </motion.div>
@@ -458,10 +458,10 @@ export const GameBoard = () => {
             <div className="text-center">
               <div className="text-xl font-bold text-white mb-2">You Won!</div>
               <div className="text-sm text-white/80">
-                You won {(betAmount * multiplier).toFixed(2)} STT
+                You won {(betAmount * multiplier).toFixed(2)} MCS
               </div>
               <div className="text-xs text-white/60 mt-1">
-                Profit: +{(betAmount * (multiplier - 1)).toFixed(2)} STT
+                Profit: +{(betAmount * (multiplier - 1)).toFixed(2)} MCS
               </div>
             </div>
           </motion.div>

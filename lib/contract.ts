@@ -1,5 +1,5 @@
 // STT Token Contract Address
-export const STT_TOKEN_ADDRESS = "0x1C3Ac2a186c6149Ae7Cb4D716eBbD0766E4f898a" as const;
+export const STT_TOKEN_ADDRESS = "0xa92e482f2356814Dc9a5672B7D8fE4E6276403Ac" as const;
 
 // ERC20 Standard ABI (for approve, allowance, balanceOf, transfer, transferFrom , decimals)
 export const ERC20_ABI = [
@@ -142,7 +142,7 @@ export const ERC20_ABI = [
 // TODO: Update contractAddress with the new deployed contract address
 export const MonadVault = {
     
-    contractAddress: "0x2CDD0570b432c8FF86ed028C2C56659B17e89796", // Update this with new deployed address
+    contractAddress: "0x4D60D7f351DaB97F35512F694a8b2D1b64Aa14F8", // Update this with new deployed address
     abi : [
       {
         "type": "constructor",

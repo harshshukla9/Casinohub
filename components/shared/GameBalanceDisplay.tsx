@@ -16,16 +16,16 @@ export function GameBalanceDisplay() {
         <div className="flex items-center justify-between">
           <span className="text-sm text-white/70">Balance</span>
           <span className="text-lg font-bold text-[#00ffaa]">
-            {isLoading ? '...' : `${balance.toFixed(4)} STT`}
+            {isLoading ? '...' : `${balance.toFixed(4)} MCS`}
           </span>
         </div>
         <div className="flex items-center justify-between text-xs">
           <span className="text-white/50">Deposited:</span>
-          <span className="text-green-400">{totalDeposited.toFixed(4)} STT</span>
+          <span className="text-green-400">{totalDeposited.toFixed(4)} MCS</span>
         </div>
         <div className="flex items-center justify-between text-xs">
           <span className="text-white/50">Withdrawn:</span>
-          <span className="text-red-400">{totalWithdrawn.toFixed(4)} STT</span>
+          <span className="text-red-400">{totalWithdrawn.toFixed(4)} MCS</span>
         </div>
       </div>
     </div>

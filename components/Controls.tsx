@@ -175,7 +175,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
       setBetInputValue(maxBetLimit.toFixed(2));
       const diamonds = 25 - mineCount;
       toast.info(
-        `Maximum bet for ${mineCount} ${mineCount === 1 ? 'mine' : 'mines'} (${diamonds} ${diamonds === 1 ? 'diamond' : 'diamonds'}) is ${maxBetLimit.toLocaleString()} STT`,
+        `Maximum bet for ${mineCount} ${mineCount === 1 ? 'mine' : 'mines'} (${diamonds} ${diamonds === 1 ? 'diamond' : 'diamonds'}) is ${maxBetLimit.toLocaleString()} MCS`,
         { duration: 3000 }
       );
     }
@@ -233,7 +233,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
       setBetInputValue(maxBetLimit.toFixed(2));
       const diamonds = 25 - mineCount;
       toast.info(
-        `Maximum bet for ${mineCount} ${mineCount === 1 ? 'mine' : 'mines'} (${diamonds} ${diamonds === 1 ? 'diamond' : 'diamonds'}) is ${maxBetLimit.toLocaleString()} STT`,
+        `Maximum bet for ${mineCount} ${mineCount === 1 ? 'mine' : 'mines'} (${diamonds} ${diamonds === 1 ? 'diamond' : 'diamonds'}) is ${maxBetLimit.toLocaleString()} MCS`,
         { duration: 3000 }
       );
       return;
@@ -262,7 +262,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
       setBetInputValue(maxBetLimit.toFixed(2));
       const diamonds = 25 - mineCount;
       toast.info(
-        `Maximum bet for ${mineCount} ${mineCount === 1 ? 'mine' : 'mines'} (${diamonds} ${diamonds === 1 ? 'diamond' : 'diamonds'}) is ${maxBetLimit.toLocaleString()} STT`,
+        `Maximum bet for ${mineCount} ${mineCount === 1 ? 'mine' : 'mines'} (${diamonds} ${diamonds === 1 ? 'diamond' : 'diamonds'}) is ${maxBetLimit.toLocaleString()} MCS`,
         { duration: 3000 }
       );
       return;
@@ -279,7 +279,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
         
         if (numericBetValue > maxBetLimit) {
           const diamonds = 25 - mineCount;
-          toast.error(`Maximum bet for ${mineCount} ${mineCount === 1 ? 'mine' : 'mines'} (${diamonds} ${diamonds === 1 ? 'diamond' : 'diamonds'}) is ${maxBetLimit.toLocaleString()} STT`);
+          toast.error(`Maximum bet for ${mineCount} ${mineCount === 1 ? 'mine' : 'mines'} (${diamonds} ${diamonds === 1 ? 'diamond' : 'diamonds'}) is ${maxBetLimit.toLocaleString()} MCS`);
           return;
         }
         
@@ -424,7 +424,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
         
         if (numericBetValue > maxBetLimit) {
           const diamonds = 25 - mineCount;
-          setAutoBetError(`Maximum bet for ${mineCount} ${mineCount === 1 ? 'mine' : 'mines'} (${diamonds} ${diamonds === 1 ? 'diamond' : 'diamonds'}) is ${maxBetLimit.toLocaleString()} STT`);
+          setAutoBetError(`Maximum bet for ${mineCount} ${mineCount === 1 ? 'mine' : 'mines'} (${diamonds} ${diamonds === 1 ? 'diamond' : 'diamonds'}) is ${maxBetLimit.toLocaleString()} MCS`);
           setIsAutoBetting(false);
           setAutoBetRemaining(0);
           setTimeout(() => setAutoBetError(""), 5000);
@@ -509,7 +509,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
     }
 
     if (numericBetValue < 0.01) {
-      setAutoBetError("Minimum bet amount is 0.01 STT");
+      setAutoBetError("Minimum bet amount is 0.01 MCS");
       setTimeout(() => setAutoBetError(""), 3000);
       return;
     }
@@ -520,7 +520,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
     if (numericBetValue > maxBetLimit) {
       const diamonds = 25 - mineCount;
       setAutoBetError(
-        `Maximum bet for ${mineCount} ${mineCount === 1 ? 'mine' : 'mines'} (${diamonds} ${diamonds === 1 ? 'diamond' : 'diamonds'}) is ${maxBetLimit.toLocaleString()} STT`
+        `Maximum bet for ${mineCount} ${mineCount === 1 ? 'mine' : 'mines'} (${diamonds} ${diamonds === 1 ? 'diamond' : 'diamonds'}) is ${maxBetLimit.toLocaleString()} MCS`
       );
       setTimeout(() => setAutoBetError(""), 5000);
       return;
@@ -530,7 +530,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
       setAutoBetError(
         `Insufficient balance. Need ${totalRequired.toFixed(
           2
-        )} STT for ${count} bets`
+        )} MCS for ${count} bets`
       );
       setTimeout(() => setAutoBetError(""), 5000);
       return;
@@ -571,7 +571,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
                     return;
                   }
                   if (isBelowMinimum) {
-                    toast.error("Minimum bet is 0.01 STT");
+                    toast.error("Minimum bet is 0.01 MCS");
                     return;
                   }
                   if (hasInsufficientBalance) {
@@ -588,7 +588,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
                 {hasInsufficientBalance
                   ? "Insufficient Balance"
                   : isBelowMinimum
-                  ? "Minimum 0.01 STT"
+                  ? "Minimum 0.01 MCS"
                   : "Bet"}
               </motion.button>
             ) : (
@@ -620,7 +620,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
               <div className="text-right">
                 <div className="text-xs text-white/60 mb-1">Available</div>
                 <div className="text-lg font-semibold text-white">
-                  {(betAmount * multiplier).toFixed(2)} STT
+                  {(betAmount * multiplier).toFixed(2)} MCS
                 </div>
               </div>
             </div>
@@ -686,8 +686,8 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
                 <div className="text-sm text-red-300">
                   <div className="font-medium">Insufficient Balance</div>
                   <div className="text-xs">
-                    You need {numericBetValue.toFixed(2)} STT but only have{" "}
-                    {userBalance?.balance.toFixed(2)} STT
+                    You need {numericBetValue.toFixed(2)} MCS but only have{" "}
+                    {userBalance?.balance.toFixed(2)} MCS
                   </div>
                 </div>
               </div>
@@ -698,7 +698,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
               <div className="flex items-center gap-2">
                 <div className="text-sm text-yellow-300">
                   <div className="font-medium">Minimum Bet Required</div>
-                  <div className="text-xs">Minimum bet amount is 0.01 STT</div>
+                  <div className="text-xs">Minimum bet amount is 0.01 MCS</div>
                 </div>
               </div>
             </div>
@@ -709,7 +709,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
                 <div className="text-sm text-orange-300">
                   <div className="font-medium">Maximum Bet Limit</div>
                   <div className="text-xs">
-                    Maximum bet for {mineCount} {mineCount === 1 ? 'mine' : 'mines'} ({25 - mineCount} {25 - mineCount === 1 ? 'diamond' : 'diamonds'}) is {maxBetLimit.toLocaleString()} STT
+                    Maximum bet for {mineCount} {mineCount === 1 ? 'mine' : 'mines'} ({25 - mineCount} {25 - mineCount === 1 ? 'diamond' : 'diamonds'}) is {maxBetLimit.toLocaleString()} MCS
                   </div>
                 </div>
               </div>
@@ -828,7 +828,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
                   return;
                 }
                 if (isBelowMinimum) {
-                  toast.error("Minimum bet is 0.01 STT");
+                  toast.error("Minimum bet is 0.01 MCS");
                   return;
                 }
                 if (hasInsufficientBalance) {
@@ -837,7 +837,7 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
                 }
                 if (exceedsMaxBetLimit) {
                   const diamonds = 25 - mineCount;
-                  toast.error(`Maximum bet for ${mineCount} ${mineCount === 1 ? 'mine' : 'mines'} (${diamonds} ${diamonds === 1 ? 'diamond' : 'diamonds'}) is ${maxBetLimit.toLocaleString()} STT`);
+                  toast.error(`Maximum bet for ${mineCount} ${mineCount === 1 ? 'mine' : 'mines'} (${diamonds} ${diamonds === 1 ? 'diamond' : 'diamonds'}) is ${maxBetLimit.toLocaleString()} MCS`);
                   return;
                 }
                 if (canStart) {
@@ -850,9 +850,9 @@ export const Controls = ({ onBetPlaced }: ControlsProps) => {
               {hasInsufficientBalance
                 ? "Insufficient Balance"
                 : isBelowMinimum
-                ? "Minimum 0.01 STT"
+                ? "Minimum 0.01 MCS"
                 : exceedsMaxBetLimit
-                ? `Max ${maxBetLimit.toLocaleString()} STT`
+                ? `Max ${maxBetLimit.toLocaleString()} MCS`
                 : "Bet"}
             </motion.button>
           ) : (
