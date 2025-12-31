@@ -10,7 +10,7 @@ import StopProfitAmount from "@/components/shared/StopProfitAmount";
 import { EthSvg, InfinitySvg } from "@/components/svgs";
 import SwitchTab from "@/components/shared/SwitchTab";
 import VerifyModal from "@/components/shared/VerifyModal";
-import useIsMobile from "@/hooks/useIsMobile";
+
 import Layout from "@/layout/layout";
 import { useAccount } from "wagmi";
 import { useUserBalance } from "@/hooks/useUserBalance";
@@ -19,6 +19,8 @@ import { GameBalanceDisplay } from "@/components/shared/GameBalanceDisplay";
 import { Button } from "@/components/ui/button";
 import React, { useEffect, useRef, useState } from "react";
 import axiosServices from "@/util/axios";
+import Image from "next/image";
+import { motion } from "motion/react";
 
 
 
@@ -56,7 +58,6 @@ const playSound = (audioFile: any) => {
 };
 
 const CrashGame = () => {
-    const isMobile = useIsMobile();
     const { address } = useAccount();
     const { balance, isLoading: isLoadingBalance } = useUserBalance();
 
@@ -66,20 +67,20 @@ const CrashGame = () => {
 
     const [gameId, setGameId] = useState("");
     const [betAmount, setBetAmount] = useState(0);
-    const [target, setTarget] = useState(0); // 0 means no target (optional)
+    const [target, setTarget] = useState(0);
     const [gameState, setGameState] = useState(GAME_STATES.NotStarted);
     const [payout, setPayout] = useState(1);
     const [crashed, setCrashed] = useState(false);
     const [betting, setBetting] = useState(false);
     const [cashedOut, setCashedOut] = useState(false);
-    const [cashedOutMultiplier, setCashedOutMultiplier] = useState(0); // Store the multiplier when cashed out
+    const [cashedOutMultiplier, setCashedOutMultiplier] = useState(0);
     const [loading, setLoading] = useState(false);
     const [history, setHistory] = useState<any[]>([]);
     const [verifyId, setGameVerifyId] = useState("");
     const [startTime, setStartTime] = useState<any>(null);
     const [amountInputFlag, setAmountInputFlag] = useState(true);
 
-    // Auto bet related states
+
     const [autoBetCount, setAutoCount] = useState(0);
     const [stopProfitA, setStopPorfitA] = useState(0);
     const [stopLossA, setStopLossA] = useState(0);
@@ -89,18 +90,18 @@ const CrashGame = () => {
     const [savebetAmount, setBetSaveAmount] = useState(0);
     const [players, setPlayers] = useState<any[]>([]);
 
-    // Currency object (can be extended later for multi-currency support)
+
     const currency: any = {};
 
     const gameIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const gameStartTimeRef = useRef<number>(0);
     const crashPointRef = useRef<number>(0);
-    const payoutRef = useRef<number>(1); // Track current payout
-    const cashedOutRef = useRef<boolean>(false); // Track cashout status in interval
-    const cashedOutMultiplierRef = useRef<number>(0); // Track cashout multiplier in interval
+    const payoutRef = useRef<number>(1);
+    const cashedOutRef = useRef<boolean>(false);
+    const cashedOutMultiplierRef = useRef<number>(0);
 
 
-    // Start new game
+
     const clickBet = async () => {
         if (!address) {
             alert("Please connect your wallet first");
@@ -112,7 +113,7 @@ const CrashGame = () => {
             return;
         }
 
-        // Check balance before placing bet
+
         if (!hasSufficientBalance(balance, betAmount)) {
             alert("Insufficient balance");
             return;
@@ -125,7 +126,7 @@ const CrashGame = () => {
 
         setLoading(true);
         try {
-            // First, deduct balance using unified API
+
             const betResult = await placeBetBalance(address, betAmount);
             if (!betResult.success) {
                 alert(betResult.error || "Failed to place bet");
@@ -133,11 +134,11 @@ const CrashGame = () => {
                 return;
             }
 
-            // Create game (target is optional, 0 means no target)
+
             const response = await axiosServices.post(`${CRASH_API}/create`, {
                 walletAddress: address,
                 betAmount,
-                target: target || 0, // Send 0 if target not set
+                target: target || 0,
             });
 
             const data = response.data;
@@ -149,17 +150,17 @@ const CrashGame = () => {
                 setPayout(1);
                 setCrashed(false);
                 setCashedOut(false);
-                setCashedOutMultiplier(0); // Reset cashout multiplier for new game
-                cashedOutRef.current = false; // Reset ref
-                cashedOutMultiplierRef.current = 0; // Reset ref
+                setCashedOutMultiplier(0);
+                cashedOutRef.current = false;
+                cashedOutMultiplierRef.current = 0;
                 setBetting(true);
                 setBetSaveAmount(betAmount);
 
-                // Use crash point from create response or get from status
+
                 if (data.crashPoint) {
                     crashPointRef.current = data.crashPoint;
                 } else {
-                    // Fallback: get from status
+
                     try {
                         const statusResponse = await axiosServices.post(`${CRASH_API}/status`, {
                             walletAddress: address,
@@ -173,7 +174,7 @@ const CrashGame = () => {
                     }
                 }
 
-                // Start game after 3 seconds
+
                 setTimeout(() => {
                     startGame();
                 }, 3000);
@@ -197,9 +198,9 @@ const CrashGame = () => {
         const now = Date.now();
         gameStartTimeRef.current = now;
         setStartTime(now);
-        setLoading(false); // Enable cashout button
+        setLoading(false);
 
-        // Update game status on server to 'running' - this is critical!
+
         try {
             console.log("Starting game on server...");
             const statusResponse = await axiosServices.post(`${CRASH_API}/status`, {
@@ -211,7 +212,7 @@ const CrashGame = () => {
             console.error("Failed to update game status:", error);
         }
 
-        // Update multiplier every 100ms
+
         gameIntervalRef.current = setInterval(() => {
             const elapsed = (Date.now() - gameStartTimeRef.current) / 1000;
             const currentMultiplier = Math.min(1.00 + (elapsed * 0.1), crashPointRef.current);
@@ -220,9 +221,9 @@ const CrashGame = () => {
             payoutRef.current = roundedPayout;
             setPayout(roundedPayout);
 
-            // Check if crashed - game continues even after cashout until crash
+
             if (currentMultiplier >= crashPointRef.current) {
-                // Game crashed - end it now
+
                 if (gameIntervalRef.current) {
                     clearInterval(gameIntervalRef.current);
                     gameIntervalRef.current = null;
@@ -230,8 +231,8 @@ const CrashGame = () => {
                 setGameState(GAME_STATES.Over);
                 setCrashed(true);
                 setBetting(false);
-                
-                // Add to history using refs for current values
+
+
                 const historyItem = {
                     _id: gameId || `game_${Date.now()}`,
                     crashPoint: crashPointRef.current,
@@ -243,14 +244,14 @@ const CrashGame = () => {
         }, 100);
     };
 
-    // Switch to auto betting (simplified - not using socket)
+
     const handleAutoBetChange = (value: any) => {
-        // Auto betting can be implemented later if needed
+
     };
 
-    // Cashout - marks player as cashed out but game continues until crash
+
     const clickCashout = async () => {
-        // Use ref to get CURRENT payout (not stale state)
+
         const currentPayout = payoutRef.current;
         console.log("💰 clickCashout called:", {
             address,
@@ -258,7 +259,8 @@ const CrashGame = () => {
             payoutState: payout,
             gameState,
             cashedOut,
-            betAmount
+            betAmount,
+            gameId
         });
 
         if (!address) {
@@ -267,12 +269,24 @@ const CrashGame = () => {
             return;
         }
 
+        if (gameState !== GAME_STATES.InProgress) {
+            console.error("❌ Game not in progress", gameState);
+            alert("No active game to cash out");
+            return;
+        }
+
         if (cashedOut) {
             console.log("❌ Already cashed out");
             return;
         }
 
-        // If payout <= 1, game hasn't really started
+        if (!gameId) {
+            console.error("❌ No game ID");
+            alert("Game not properly initialized");
+            return;
+        }
+
+
         if (currentPayout <= 1) {
             console.log("❌ Payout is 1 or less, game not running. Current payout:", currentPayout);
             return;
@@ -282,41 +296,48 @@ const CrashGame = () => {
 
         setLoading(true);
         try {
-            // DON'T stop the interval - let the game continue running!
-            // Just mark as cashed out and add winnings
 
-            // Use current payout from ref as multiplier
+
             const currentMultiplier = currentPayout;
             console.log("Attempting cashout:", { currentMultiplier, betAmount, gameId });
 
-            // Call cashout API with current multiplier
+
             const response = await axiosServices.post(`${CRASH_API}/cashout`, {
                 walletAddress: address,
-                multiplier: currentMultiplier, // Send current multiplier to server
+                multiplier: currentMultiplier,
             });
 
             const cashoutData = response.data;
             console.log("Cashout API response:", cashoutData);
 
             if (cashoutData && cashoutData.success) {
-                // Use multiplier from API response or current payout
+
                 const finalMultiplier = cashoutData.multiplier || currentMultiplier;
-                // Use saved bet amount (the amount when bet was placed)
+
                 const betToUse = savebetAmount || betAmount;
                 console.log("Cashout successful, adding winnings:", { finalMultiplier, betToUse });
 
-                // Add winnings to balance
+
                 const cashoutResult = await cashoutBalance(address, betToUse, finalMultiplier);
                 console.log("Cashout balance result:", cashoutResult);
 
                 if (cashoutResult.success) {
-                    // Mark as cashed out but DON'T end game - let it continue!
+
                     setCashedOut(true);
                     setCashedOutMultiplier(finalMultiplier);
-                    cashedOutRef.current = true; // Update ref for interval
-                    cashedOutMultiplierRef.current = finalMultiplier; // Update ref for interval
+                    cashedOutRef.current = true;
+                    cashedOutMultiplierRef.current = finalMultiplier;
+
+                    if (gameIntervalRef.current) {
+                        clearInterval(gameIntervalRef.current);
+                        gameIntervalRef.current = null;
+                    }
+
+                    setGameState(GAME_STATES.Over);
+                    setBetting(false);
                     setLoading(false);
-                    console.log("✅ Cashed out at", finalMultiplier + "x", "- Game continues until crash at", crashPointRef.current + "x");
+
+                    console.log("✅ Cashed out at", finalMultiplier + "x", "Game reset for next round");
                 } else {
                     console.error("Cashout balance error:", cashoutResult);
                     alert(cashoutResult.error || "Failed to add winnings to balance");
@@ -336,416 +357,276 @@ const CrashGame = () => {
         }
     };
 
-    // handle target value (0 means no target)
+
     const onTargetChange = (value: any) => {
         const numValue = parseFloat(value) || 0;
         setTarget(numValue);
     };
 
-    // Auto cashout if target reached (only if target is set > 0)
+
     useEffect(() => {
         if (gameState === GAME_STATES.InProgress && !cashedOut && target > 0 && address) {
             if (payout >= target) {
                 clickCashout();
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, [payout, target, gameState, cashedOut, address]);
 
-    // Disabled for betting inputs, but NOT for cashout button when game is in progress
+    useEffect(() => {
+        if (gameState === GAME_STATES.Over) {
+            const resetTimer = setTimeout(() => {
+                setGameState(GAME_STATES.NotStarted);
+                setCashedOut(false);
+                setCashedOutMultiplier(0);
+                setCrashed(false);
+                setPayout(1);
+            }, 3000);
+
+            return () => clearTimeout(resetTimer);
+        }
+    }, [gameState]);
+
+
+
     const disabled = loading || (betting && gameState !== GAME_STATES.InProgress) || gameState === GAME_STATES.Starting;
     const isAuto = activeTab === 1;
 
     return (
         <Layout>
-            <div className="flex w-full justify-center h-full">
-                <div className="w-full h-full flex justify-center">
-                    <div
-                        className={`flex flex-col w-full h-full`}
-                    >
-                        <div
-                            className={`w-full h-[40vh]`}
-                        >
-                            {/* <div className="absolute top-4 z-10 left-5 max-w-[70%]">
-                                <div className="flex space-x-2 items-center">
-                                    {history
-                                        .slice(isMobile ? 3 : 0, 6)
-                                        .map((item: any, key: number) => {
-                                            const opacity = `opacity-${key + 4
-                                                }0 hover:opacity-100 transition-all`;
-                                            return (
-                                                <div
-                                                    key={key}
-                                                    className={`text-gray-900 font-semibold bg-gray-100 px-2 py-1 rounded-lg animate-zoomIn cursor-pointer hover:bg-gray-200 transition-colors shadow-sm`}
-                                                    onClick={() => setGameVerifyId(item._id)}
-                                                >
-                                                    {item.crashPoint < 1.2 ? (
-                                                        <div
-                                                            className={`px-1 rounded-full overflow-hidden  ${opacity}`}
-                                                        >
-                                                            {parseCommasToThousands(
-                                                                cutDecimalPoints(item.crashPoint.toFixed(2))
-                                                            )}
-                                                            x
-                                                        </div>
-                                                    ) : item.crashPoint >= 1.2 && item.crashPoint < 2 ? (
-                                                        <div
-                                                            className={` px-1 rounded-full overflow-hidden  ${opacity}`}
-                                                        >
-                                                            {" "}
-                                                            {parseCommasToThousands(
-                                                                cutDecimalPoints(item.crashPoint.toFixed(2))
-                                                            )}
-                                                            x
-                                                        </div>
-                                                    ) : item.crashPoint >= 2 && item.crashPoint < 100 ? (
-                                                        <div
-                                                            className={` px-1 rounded-full overflow-hidden ${opacity}`}
-                                                        >
-                                                            {parseCommasToThousands(
-                                                                cutDecimalPoints(item.crashPoint.toFixed(2))
-                                                            )}
-                                                            x
-                                                        </div>
-                                                    ) : (
-                                                        <div
-                                                            className={`px-1 rounded-full overflow-hidden  ${opacity}`}
-                                                        >
-                                                            {" "}
-                                                            {parseCommasToThousands(
-                                                                cutDecimalPoints(item.crashPoint.toFixed(2))
-                                                            )}
-                                                            x
-                                                        </div>
-                                                    )}
+            <div className="w-full min-h-[calc(100vh-80px)] px-2 sm:px-4 lg:px-6 py-4 md:py-6">
+                <div className="max-w-7xl mx-auto">
+                    <div className="flex flex-col lg:flex-row gap-4  overflow-hidden">
+
+                        <div className="flex-1 flex flex-col">
+                            <div className="w-full h-[40vh] md:h-[50vh] lg:h-[60vh] bg-gradient-to-br from-gray-900 to-black">
+                                <GameCanvas
+                                    status={gameState}
+                                    payout={payout}
+                                    startTime={startTime}
+                                />
+
+                                {(gameState === GAME_STATES.InProgress || (gameState === GAME_STATES.Over && (cashedOut || crashed))) && (
+                                    <motion.div
+                                        initial={{ y: "-100%" }}
+                                        animate={{ y: 0 }}
+                                        transition={{ duration: 0.6, ease: "easeOut" }}
+                                        className={`absolute h-[10vh] top-0 left-0 right-0 z-50 shadow-lg ${crashed && !cashedOut ? 'bg-red-50 border-2 border-red-500' : 'bg-white'
+                                            }`}
+                                    >
+                                        <div className="h-full flex items-center justify-between px-6">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] text-gray-600 font-medium uppercase tracking-wider">Bet</span>
+                                                <div className="flex items-center gap-1.5">
+                                                    <Image src="/impAssets/Chip.webp" alt="coin" width={18} height={18} />
+                                                    <span className="text-base font-bold text-gray-900">{(Number(savebetAmount) || 0).toFixed(2)}</span>
                                                 </div>
-                                            );
-                                        })}
-                                    <GameHistory Label={"crash"} setGameId={setGameVerifyId} />
-                                </div>
-                            </div> */}
-                            {/* <span className="absolute top-4 right-5 z-10 h-6 text-base crash-game-status">
-                                <div className="flex items-center">
-                                    <div className="p-2">
-                                        <NetStatus payout={payout} />
-                                    </div>
-                                </div>
-                            </span> */}
-                            <GameCanvas
-                                status={gameState}
-                                payout={payout}
-                                startTime={startTime}
-                            />
+                                            </div>
+
+                                            <div className="flex flex-col items-center">
+                                                <span className="text-[10px] text-gray-600 font-medium uppercase tracking-wider">
+                                                    {crashed && !cashedOut ? "Crashed @" : cashedOut ? "Cashed @" : "Multiplier"}
+                                                </span>
+                                                <motion.div
+                                                    animate={{
+                                                        scale: gameState === GAME_STATES.InProgress ? [1, 1.08, 1] : 1,
+                                                        color: crashed && !cashedOut ? "#dc2626" : cashedOut ? "#10b981" : "#000000"
+                                                    }}
+                                                    transition={{ duration: 0.4, repeat: gameState === GAME_STATES.InProgress ? Infinity : 0 }}
+                                                    className="text-3xl font-black"
+                                                >
+                                                    {crashed && !cashedOut
+                                                        ? `${crashPointRef.current.toFixed(2)}x`
+                                                        : cashedOut
+                                                            ? `${cashedOutMultiplier.toFixed(2)}x`
+                                                            : `${payout.toFixed(2)}x`
+                                                    }
+                                                </motion.div>
+                                            </div>
+
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-[10px] text-gray-600 font-medium uppercase tracking-wider">
+                                                    {crashed && !cashedOut ? "Lost" : cashedOut ? "Won" : "Potential"}
+                                                </span>
+                                                <div className="flex items-center gap-1.5">
+                                                    <motion.span
+                                                        animate={{
+                                                            scale: gameState === GAME_STATES.InProgress ? [1, 1.05, 1] : 1
+                                                        }}
+                                                        transition={{ duration: 0.3, repeat: gameState === GAME_STATES.InProgress ? Infinity : 0 }}
+                                                        className={`text-base font-bold ${crashed && !cashedOut ? 'text-red-600' : cashedOut ? 'text-emerald-600' : 'text-blue-600'
+                                                            }`}
+                                                    >
+                                                        {crashed && !cashedOut
+                                                            ? `-${(savebetAmount || 0).toFixed(2)}`
+                                                            : cashedOut
+                                                                ? `+${((savebetAmount || 0) * cashedOutMultiplier).toFixed(2)}`
+                                                                : `+${((savebetAmount || 0) * payout).toFixed(2)}`
+                                                        }
+                                                    </motion.span>
+                                                    <Image src="/impAssets/Chip.webp" alt="coin" width={18} height={18} />
+                                                </div>
+                                                {cashedOut && gameState === GAME_STATES.Over && (
+                                                    <motion.span
+                                                        initial={{ opacity: 0, y: -5 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        className="text-[9px] text-amber-600 font-semibold mt-0.5"
+                                                    >
+                                                        Safe! 🎉
+                                                    </motion.span>
+                                                )}
+                                                {crashed && !cashedOut && gameState === GAME_STATES.Over && (
+                                                    <motion.span
+                                                        initial={{ opacity: 0, y: -5 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        className="text-[9px] text-red-600 font-semibold mt-0.5"
+                                                    >
+                                                        Busted! 💥
+                                                    </motion.span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </div>
                         </div>
 
-                        {/* controls */}
-                        <div className="h-full flex justify-center mt-4 ">
-                            {/* {!isMobile && (
-                                <div className="col-span-1 p-6 min-h-[560px] bg-white border-l border-gray-200 shadow-sm flex flex-col justify-between xl:w-[340px]">
-                                    <div className="gap-1 flex flex-col space-y-1">
-                                        {address && <div className="mb-6 pb-5 border-b border-gray-100"><GameBalanceDisplay /></div>}
-                                        <SwitchTab
-                                            onChange={(e) => setActiveTab(e)}
+
+                        <div className="w-full lg:w-[380px] bg-white rounded-2xl p-5 lg:p-6">
+
+                            <div className="flex flex-col space-y-3">
+                                <div className="">
+                                    {isAuto ? (
+                                        <Button
+                                            className="p-6 bg-sky-400 w-full hover:bg-sky-500 text-white rounded-3xl text-lg flex items-center gap-3 transition-colors"
+                                            disabled={
+                                                betting &&
+                                                gameState !== GAME_STATES.InProgress &&
+                                                !autoBetEnabled
+                                            }
+                                            onClick={() => {
+                                                if (!betting) {
+                                                    if (autoBetEnabled) {
+                                                        handleAutoBetChange(false);
+                                                    } else {
+                                                        clickBet();
+                                                        handleAutoBetChange(true);
+                                                    }
+                                                } else if (
+                                                    gameState === GAME_STATES.InProgress &&
+                                                    !cashedOut
+                                                ) {
+                                                    clickCashout();
+                                                } else if (autoBetEnabled) {
+                                                    handleAutoBetChange(false);
+                                                }
+                                            }}
+                                        >
+                                            {!betting
+                                                ? autoBetEnabled
+                                                    ? "Stop Autobet"
+                                                    : "Start Autobet"
+                                                : gameState === GAME_STATES.InProgress && !cashedOut
+                                                    ? "CASHOUT"
+                                                    : autoBetEnabled
+                                                        ? "Stop Autobet"
+                                                        : "Finishing Bet"}
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            type="button"
+                                            className={`p-6 bg-sky-400 w-full hover:bg-sky-500 text-white rounded-3xl text-lg flex items-center gap-3 transition-colors`}
+                                            disabled={loading}
+                                            onClick={async (e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+
+                                                if (loading) {
+                                                    return;
+                                                }
+
+                                                if (gameState === GAME_STATES.InProgress && payout > 1 && !cashedOut) {
+                                                    await clickCashout();
+                                                } else {
+                                                    clickBet();
+                                                }
+                                            }}
+                                        >
+                                            {!betting
+                                                ? joining
+                                                    ? "BETTING..."
+                                                    : plannedBet
+                                                        ? "CANCEL BET"
+                                                        : "Place Bet"
+                                                : cashedOut
+                                                    ? `CASHED OUT @ ${cashedOutMultiplier.toFixed(2)}x`
+                                                    : "CASHOUT"}
+                                        </Button>
+                                    )}
+                                </div>
+
+                                {(!isAuto || subActiveTab !== 1) && (
+                                    <>
+                                        <AmountInput
                                             disabled={disabled}
-                                            active={activeTab}
+                                            value={betAmount}
+                                            onChange={setBetAmount}
                                         />
-                                        {isAuto && (
-                                            <SwitchTab
-                                                onChange={setSubActiveTab}
-                                                disabled={false}
-                                                active={subActiveTab}
-                                                options={["Controls", "Leaderboard"]}
-                                                type={"sub"}
-                                            />
-                                        )}
-                                        {(!isAuto || subActiveTab !== 1) && (
-                                            <>
-                                                <AmountInput
-                                                    disabled={disabled}
-                                                    value={betAmount}
-                                                    onChange={setBetAmount}
-                                                    className={`${!amountInputFlag ? "animate-bounding2" : ""
-                                                        }`}
-                                                />
-                                                <MultiPlierInput
-                                                    disabled={disabled}
-                                                    value={target}
-                                                    onChange={onTargetChange}
-                                                />
-                                            </>
-                                        )}
-
-                                        {isAuto && subActiveTab === 1 && (
-                                            <CurrentBets bets={players} />
-                                        )}
-                                        {isAuto && subActiveTab !== 1 && (
-                                            <>
-                                                <BetNumberInput
-                                                    disabled={disabled}
-                                                    value={autoBetCount}
-                                                    onChange={setAutoCount}
-                                                    Icon={<InfinitySvg />}
-                                                />
-                                                <StopProfitAmount
-                                                    disabled={disabled}
-                                                    Label={"Stop on Profit"}
-                                                    onChange={setStopPorfitA}
-                                                    value={stopProfitA}
-                                                    Icon={<SelectedPaymentIcon currency={currency} />}
-                                                />
-                                                <StopProfitAmount
-                                                    disabled={disabled}
-                                                    Label={"Loss on Profit"}
-                                                    onChange={setStopLossA}
-                                                    value={stopLossA}
-                                                    Icon={<SelectedPaymentIcon currency={currency} />}
-                                                />
-                                            </>
-                                        )}
-                                        <ProfitAmount
-                                            disabled={true}
-                                            profit={payout * (savebetAmount || betAmount)}
-                                            multiplier={payout}
-                                            icon={<SelectedPaymentIcon currency={currency} />}
+                                        <MultiPlierInput
+                                            disabled={disabled}
+                                            value={target}
+                                            onChange={onTargetChange}
                                         />
+                                    </>
+                                )}
 
-                                        {isAuto ? (
-                                            <Button className="bg-black hover:bg-gray-900 text-white font-bold uppercase rounded-xl py-3.5 shadow-lg hover:shadow-xl transition-all duration-200"
-                                                disabled={
-                                                    betting &&
-                                                    gameState !== GAME_STATES.InProgress &&
-                                                    !autoBetEnabled
-                                                }
-                                                onClick={() => {
-                                                    if (!betting) {
-                                                        if (autoBetEnabled) {
-                                                            handleAutoBetChange(false);
-                                                        } else {
-                                                            clickBet();
-                                                            handleAutoBetChange(true);
-                                                        }
-                                                    } else if (
-                                                        gameState === GAME_STATES.InProgress &&
-                                                        !cashedOut
-                                                    ) {
-                                                        clickCashout();
-                                                    } else if (autoBetEnabled) {
-                                                        handleAutoBetChange(false);
-                                                    }
-                                                }}
-                                            >
-                                                {!betting
-                                                    ? autoBetEnabled
-                                                        ? "Stop Autobet"
-                                                        : "Start Autobet"
-                                                    : gameState === GAME_STATES.InProgress && !cashedOut
-                                                        ? "CASHOUT"
-                                                        : autoBetEnabled
-                                                            ? "Stop Autobet"
-                                                            : "Finishing Bet"}
-                                            </Button>
-                                        ) : (
-                                            <Button
-                                                type="button"
-                                                className="bg-black hover:bg-gray-900 text-white font-bold uppercase rounded-xl py-3.5 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer"
-                                                style={{ pointerEvents: loading ? 'none' : 'auto' }}
-                                                disabled={loading}
-                                                onClick={async (e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
+                                {isAuto && subActiveTab !== 1 && (
+                                    <>
+                                        <BetNumberInput
+                                            disabled={disabled}
+                                            value={autoBetCount}
+                                            onChange={setAutoCount}
+                                            Icon={<Image src={"/impAssets/Chip.webp"} alt="ETH" width={20} height={20} />}
+                                        />
+                                        <StopProfitAmount
+                                            disabled={disabled}
+                                            Label={"Stop on Profit"}
+                                            onChange={setStopPorfitA}
+                                            value={stopProfitA}
+                                            Icon={<Image src={"/impAssets/Chip.webp"} alt="ETH" width={20} height={20} />}
+                                        />
+                                        <StopProfitAmount
+                                            disabled={disabled}
+                                            Label={"Loss on Profit"}
+                                            onChange={setStopLossA}
+                                            value={stopLossA}
+                                            Icon={<Image src={"/impAssets/Chip.webp"} alt="ETH" width={20} height={20} />}
+                                        />
+                                    </>
+                                )}
 
-                                                    // Use ref to get CURRENT payout value (not stale closure value)
-                                                    const currentPayout = payoutRef.current;
-                                                    console.log("=== CASHOUT BUTTON CLICKED ===", {
-                                                        currentPayout,
-                                                        payoutState: payout,
-                                                        betting,
-                                                        gameState,
-                                                        cashedOut,
-                                                        loading,
-                                                        betAmount,
-                                                        address
-                                                    });
+                                <ProfitAmount
+                                    multiplier={payout}
+                                    disabled={true}
+                                    profit={payout * savebetAmount}
+                                    icon={<Image src={"/impAssets/Chip.webp"} alt="ETH" width={20} height={20} />}
+                                />
 
-                                                    if (loading) {
-                                                        console.log("✗ Loading, please wait...");
-                                                        return;
-                                                    }
-
-                                                    // ALWAYS allow cashout if payout > 1 - user sees it on screen!
-                                                    if (currentPayout > 1) {
-                                                        console.log("🚀 CASHOUT NOW! Payout:", currentPayout);
-                                                        await clickCashout();
-                                                    } else {
-                                                        console.log("📍 Placing bet, payout is:", currentPayout);
-                                                        clickBet();
-                                                    }
-                                                }}
-                                            >
-                                                {!betting
-                                                    ? loading
-                                                        ? "BETTING..."
-                                                        : gameState === GAME_STATES.Starting
-                                                            ? "STARTING..."
-                                                            : "BET"
-                                                    : cashedOut
-                                                        ? "CASHED OUT"
-                                                        : "CASHOUT"}
-                                            </Button>
-                                        )}
-
-                                        {!isAuto && <CurrentBets bets={players} />}
-                                    </div>
-                                </div>
-                            )} */}
-                            {isMobile && (
-                                <div className="w-11/12 bg-gray-300 border border-gray-200 rounded-2xl p-5 shadow-lg">
-                                    {address && <GameBalanceDisplay />}
-                                    <div className="w-full flex h-fit py-2 items-center justify-center">
-                                        {isAuto ? (
-                                            <Button
-                                                className="bg-black hover:bg-gray-900 text-white font-bold uppercase rounded-xl py-3.5  shadow-lg transition-all duration-200"
-                                                disabled={
-                                                    betting &&
-                                                    gameState !== GAME_STATES.InProgress &&
-                                                    !autoBetEnabled
-                                                }
-                                                onClick={() => {
-                                                    if (!betting) {
-                                                        if (autoBetEnabled) {
-                                                            handleAutoBetChange(false);
-                                                        } else {
-                                                            clickBet();
-                                                            handleAutoBetChange(true);
-                                                        }
-                                                    } else if (
-                                                        gameState === GAME_STATES.InProgress &&
-                                                        !cashedOut
-                                                    ) {
-                                                        clickCashout();
-                                                    } else if (autoBetEnabled) {
-                                                        handleAutoBetChange(false);
-                                                    }
-                                                }}
-                                            >
-                                                {!betting
-                                                    ? autoBetEnabled
-                                                        ? "Stop Autobet"
-                                                        : "Start Autobet"
-                                                    : gameState === GAME_STATES.InProgress && !cashedOut
-                                                        ? "CASHOUT"
-                                                        : autoBetEnabled
-                                                            ? "Stop Autobet"
-                                                            : "Finishing Bet"}
-                                            </Button>
-                                        ) : (
-                                            <Button
-                                                type="button"
-                                                className="bg-black hover:bg-gray-900 text-white font-bold uppercase rounded-xl py-3.5 shadow-lg transition-all duration-200"
-                                                disabled={loading}
-                                                onClick={async (e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-
-                                                    // Use ref to get CURRENT payout value (not stale closure value)
-                                                    const currentPayout = payoutRef.current;
-                                                    console.log("=== MOBILE BUTTON CLICKED ===", {
-                                                        currentPayout,
-                                                        payoutState: payout,
-                                                        betting,
-                                                        gameState,
-                                                        cashedOut,
-                                                        loading,
-                                                        betAmount
-                                                    });
-
-                                                    if (loading) {
-                                                        console.log("✗ Loading, please wait...");
-                                                        return;
-                                                    }
-
-                                                    // ALWAYS allow cashout if payout > 1 - user sees it on screen!
-                                                    if (currentPayout > 1) {
-                                                        console.log("🚀 CASHOUT NOW (mobile)! Payout:", currentPayout);
-                                                        await clickCashout();
-                                                    } else {
-                                                        console.log("📍 Placing bet (mobile), payout is:", currentPayout);
-                                                        clickBet();
-                                                    }
-                                                }}
-                                            >
-                                                {!betting
-                                                    ? joining
-                                                        ? "BETTING..."
-                                                        : plannedBet
-                                                            ? "CANCEL BET"
-                                                            : "Place Bet (next round)"
-                                                    : cashedOut
-                                                        ? `CASHED OUT @ ${cashedOutMultiplier.toFixed(2)}x`
-                                                        : "CASHOUT"}
-                                            </Button>
-                                        )}
-                                    </div>
-                                    {(!isAuto || subActiveTab !== 1) && (
-                                        <>
-                                            <AmountInput
-                                                disabled={disabled}
-                                                value={betAmount}
-                                                onChange={setBetAmount}
-                                            />
-                                            <MultiPlierInput
-                                                disabled={disabled}
-                                                value={target}
-                                                onChange={onTargetChange}
-                                            />
-                                        </>
-                                    )}
-                                    {isAuto && subActiveTab !== 1 && (
-                                        <>
-                                            <BetNumberInput
-                                                disabled={disabled}
-                                                value={autoBetCount}
-                                                onChange={setAutoCount}
-                                                Icon={<SelectedPaymentIcon currency={currency} />}
-                                            />
-                                            <StopProfitAmount
-                                                disabled={disabled}
-                                                Label={"Stop on Profit"}
-                                                onChange={setStopPorfitA}
-                                                value={stopProfitA}
-                                                Icon={<SelectedPaymentIcon currency={currency} />}
-                                            />
-                                            <StopProfitAmount
-                                                disabled={disabled}
-                                                Label={"Loss on Profit"}
-                                                onChange={setStopLossA}
-                                                value={stopLossA}
-                                                Icon={<SelectedPaymentIcon currency={currency} />}
-                                            />
-                                        </>
-                                    )}
-                                    <ProfitAmount
-                                        multiplier={payout}
-                                        disabled={true}
-                                        profit={payout * savebetAmount}
-                                        icon={<SelectedPaymentIcon currency={currency} />}
-                                    />
-                                    <SwitchTab
-                                        onChange={setActiveTab}
-                                        disabled={disabled}
-                                        active={activeTab}
-                                    />
-                                </div>
-                            )}
+                                <SwitchTab
+                                    onChange={setActiveTab}
+                                    disabled={disabled}
+                                    active={activeTab}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
-                <VerifyModal
-                    Label={"crash"}
-                    gameId={verifyId}
-                    setGameId={() => setGameVerifyId("")}
-                />
             </div>
+            <VerifyModal
+                Label={"crash"}
+                gameId={verifyId}
+                setGameId={() => setGameVerifyId("")}
+            />
         </Layout>
     );
 };

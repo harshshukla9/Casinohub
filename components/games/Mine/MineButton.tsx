@@ -25,7 +25,7 @@ const MineButton = ({ point, mine, isAuto, onClick }: MineButtonProps) => {
 
     if (isBomb) {
       return (
-        <div className="animate-bounding relative">
+        <div className="animate-bounding flex items-center justify-center w-full h-full relative">
           <img
             src={'/assets/image/mineEffect.webp'}
             className="z-10 absolute inset-0 w-full h-full"

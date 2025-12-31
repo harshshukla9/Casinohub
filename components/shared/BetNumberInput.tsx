@@ -10,7 +10,7 @@ type props = {
 }
 
 const BetNumberInput: React.FC<props> = ({ disabled, value, onChange, Icon }) => (
-    <div className="mt-4 space-y-2">
+    <div className="space-y-2">
         <div className="flex justify-between">
             <p className={`text-xs font-medium ${disabled ? "text-gray-400" : "text-gray-700"}`}>
                 Number of Bets

@@ -8,7 +8,7 @@ type props = {
     icon: any
 }
 const ProfitAmount: React.FC<props> = ({ disabled, multiplier, profit, icon }) => (
-    <div className="mt-4 space-y-2">
+    <div className="space-y-2">
         <p className={`text-xs font-medium ${disabled ? "text-gray-400" : "text-gray-700"}`}>
             Total profit {`(${multiplier})x`}
         </p>

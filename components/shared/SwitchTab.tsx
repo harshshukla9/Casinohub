@@ -1,6 +1,6 @@
 // Render switch tab (Manual/Auto)
 const SwitchTab = ({ active, options, disabled, onChange, type }: { disabled?: boolean, active: number, options?: string[], onChange: (e: number) => void, type?: string }) => (
-    <div className={`flex flex-row p-1.5 ${type === "sub" ? "" : "rounded-xl "} bg-gray-100 border border-gray-200 mt-4 shadow-sm`}>
+    <div className={`flex flex-row p-1.5 ${type === "sub" ? "" : "rounded-xl "} bg-gray-100 border border-gray-200 shadow-sm`}>
         {(options || ["Manual", "Auto"]).map((label, index) => (
             <button
                 key={index}

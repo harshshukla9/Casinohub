@@ -225,7 +225,7 @@ export const ExpolitionBombSvg = (props: SVGProps) => {
       data-name="Layer 1"
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 70 67"
-      style={{ width: "96%" }}
+      style={{ width: "96%", height: "56%" }}
       {...props}
     >
       <title>bomb</title>

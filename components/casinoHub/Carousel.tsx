@@ -11,16 +11,21 @@ import {
 import Image from "next/image"
 
 export function CarouselDemo() {
+    const images = [
+        "/casinoHub/Mines.png",
+        "/casinoHub/Crash.png",
+        "/casinoHub/Slide.png",
+        "/casinoHub/Plinko.png",
+    ]
     return (
         <Carousel className="w-full">
             <CarouselContent>
-                {Array.from({ length: 5 }).map((_, index) => (
+                {Array.from({ length: images.length }).map((_, index) => (
                     <CarouselItem key={index}>
                         <div className="p-1">
                             <Card className="p-0! overflow-hidden">
-                                <CardContent className="flex aspect-square p-0!">
-                                    {/* <span className="text-4xl font-semibold">{index + 1}</span> */}
-                                    <Image src={"/games/mines.png"} alt="mines" width={500} height={500} className="w-full h-full object-cover" />
+                                <CardContent className="flex aspect-square h-[40vh]  p-0!">
+                                    <Image src={images[index]} alt="mines" width={1000} height={1000} className="w-full h-full object-cover" />
                                 </CardContent>
                             </Card>
                         </div>

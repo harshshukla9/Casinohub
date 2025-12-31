@@ -1,7 +1,7 @@
 import Input from "./Input";
 
 const StopProfitAmount = ({ disabled, onChange, value, Icon, Label }: any) => (
-    <div className="mt-4 space-y-2">
+    <div className="space-y-2">
         <p className={`text-xs font-medium ${disabled ? "text-gray-400" : "text-gray-700"}`}>
             {Label}
         </p>
